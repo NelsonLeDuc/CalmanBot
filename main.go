@@ -11,22 +11,24 @@ import (
 type LocalHandler struct {}
 
 func (l LocalHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-    http.ServeFile(w, r, "html/addBot.html")
+    
+    var server http.Handler
+    path := r.URL.Path
+    if path == "/addBot" {
+        server = ABHook{}
+    } else {
+        server = GMHook{} 
+    }
+    
+    server.ServeHTTP(w, r)
 }
 
 func main() {
-	var g GMHook
     var l LocalHandler
-    
-    err := http.ListenAndServe(GetPort(), g)
+    err := http.ListenAndServe(GetPort(), l)
 	if err != nil {
 		log.Fatal(err)
 	}
-    
-    http.ListenAndServe("/addBot" + GetPort(), l)
-    
-//    dbUrl := os.Getenv("DATABASE_URL")
-//    database, _ := sql.Open("postgres", dbUrl)
 }
 
 func GetPort() string {
