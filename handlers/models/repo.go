@@ -52,19 +52,22 @@ func FetchActions(primary bool) ([]Action, error) {
     defer rows.Close()
     
     if err != nil {
-        return make([]Action, 0), err
+        return []Action{}, err
     }
     
-    actions := make([]Action, 1)
+    actions := []Action{}
     for rows.Next() {
         var act Action
         err := rows.Scan(&act.ContentType, &act.Content, &act.DataPath, &act.Pattern, &act.Primary, &act.Priority, &act.FallbackAction)
         if err != nil {
-            continue
+            log.Fatalln("Couldn't scan")
+        } else {
+            actions = append(actions, act)
         }
-        
-        actions = append(actions, act)
     }
     
     return actions, nil
 }
+
+//func FetchAction() (Action, error) {
+//}

@@ -21,7 +21,7 @@ func HandleCalman(w http.ResponseWriter, r *http.Request) {
     if err == nil {
         
         bot, _ := models.FetchActions(true)//.FetchBot("9214876")
-        fmt.Fprintln(w, bot)
+        fmt.Fprintln(w, len(bot))
         
         content, _ := ioutil.ReadAll(resp.Body)
         pathString := "responseData.results.{_randomInt_}.url"
