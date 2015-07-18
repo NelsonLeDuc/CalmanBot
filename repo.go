@@ -28,7 +28,7 @@ func Name() string {
     
     stmt, _ := tx.Prepare("SELECT name FROM bots WHERE id = '$1'")
     var name string
-    stmt.QueryRow(1).Scan(&name)
+    stmt.QueryRow("1").Scan(&name)
     stmt.Close()
     
     tx.Commit()
