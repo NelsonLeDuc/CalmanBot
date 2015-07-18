@@ -23,6 +23,11 @@ func ParseJSON(bytes []byte, path string) string {
         num, err := strconv.ParseInt(converted, 10, 64)
         
         if err == nil {
+            if num < 0 {
+                stuff = ""
+                break
+            }
+            
             arr := stuff.([]interface{})
             stuff = arr[num]
         } else {
@@ -52,8 +57,14 @@ func ConvertedComponent(s string, stuff interface{}) string {
     if s == "{_randomInt_}" {
         switch t := stuff.(type) {
         case []interface{}:
-            rand.Seed(time.Now().UnixNano())
-            num := rand.Intn(len(t))
+            length := len(t)
+            var num int
+            if length > 0 {
+                rand.Seed(time.Now().UnixNano())
+                num = rand.Intn(length)
+            } else {
+                num = -1
+            }
             return strconv.Itoa(num)
         default:
             return s
