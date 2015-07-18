@@ -29,7 +29,7 @@ func HandleCalman(w http.ResponseWriter, r *http.Request) {
 func PrintMessage(w http.ResponseWriter, r *http.Request) {
     
     cont, _ := ioutil.ReadAll(r.Body)
-    fmt.Println(cont)
+    fmt.Println(string(cont))
 }
 
 func HandleURLAction(a models.Action, w http.ResponseWriter) {
