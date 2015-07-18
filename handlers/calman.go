@@ -19,7 +19,7 @@ func isValidHTTPURLString(s string)  bool {
 func HandleCalman(w http.ResponseWriter, r *http.Request) {
     
     act, _ := models.FetchAction(12)
-    UpdateAction(&act, "ambiguity strikes again")
+    UpdateAction(&act, models.Message{Text: "cats"})
     
     if act.IsURLType() {
         HandleURLAction(act, w)
@@ -88,8 +88,8 @@ func ValidateURL(u string, success func(string)) bool {
     return true
 }
 
-func UpdateAction(a *models.Action, text string) {
-    text = url.QueryEscape(text)
+func UpdateAction(a *models.Action, m models.Message) {
+    text := url.QueryEscape(m.Text)
     
     a.Content = strings.Replace(a.Content, "{_text_}", text, -1)
 }
