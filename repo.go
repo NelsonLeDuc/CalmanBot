@@ -7,10 +7,13 @@ import (
     _ "github.com/go-sql-driver/mysql"
 )
 
-func DatabaseThing() error {
-    _, err := sql.Open("mysql", os.Getenv("CLEARDB_DATABASE_URL"))
+func DatabaseThing() string {
+    db, _ := sql.Open("mysql", os.Getenv("CLEARDB_DATABASE_URL"))
     
-    return err
+    var name string
+    db.QueryRow("SELECT bot_name FROM bot").Scan(&name)
+    
+    return name
 }
 
 //
