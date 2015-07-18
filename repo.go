@@ -5,8 +5,8 @@ import (
     _ "github.com/go-sql-driver/mysql"
 )
 
-func DatabaseThing() *sql.DB {
-    dbUser= := ""
+func DatabaseThing() bool {
+    dbUser := ""
     _, err := sql.Open("mysql", dbUser)
     
     return err != nil
