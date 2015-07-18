@@ -9,3 +9,7 @@ type Action struct {
     Primary bool
     Priority int
 }
+
+func (a Action)IsURLType() bool {
+    return a.ContentType == "URL"
+}

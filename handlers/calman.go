@@ -5,6 +5,7 @@ import (
 	"net/http"
     "net/url"
     "io/ioutil"
+    "strings"
     "github.com/nelsonleduc/calmanbot/handlers/models"
 )
 
@@ -17,11 +18,17 @@ func isValidHTTPURLString(s string)  bool {
 
 func HandleCalman(w http.ResponseWriter, r *http.Request) {
     
-    resp, err := http.Get("http://ajax.googleapis.com/ajax/services/search/images?v=1.0&as_filetype=gif&imgtype=animated&rsz=8&q=ambiguity%20strikes%20again")
+    act, _ := models.FetchAction(12)
+    UpdateAction(&act, "ambiguity strikes again")
+    
+    if act.IsURLType() {
+        HandleURLAction(act, w)
+    }
+}
+
+func HandleURLAction(a models.Action, w http.ResponseWriter) {
+    resp, err := http.Get(a.Content)
     if err == nil {
-        
-        bot, _ := models.FetchAction(11)//.FetchBot("9214876")
-        fmt.Fprintln(w, bot)
         
         content, _ := ioutil.ReadAll(resp.Body)
         pathString := "responseData.results.{_randomInt_}.url"
@@ -70,4 +77,10 @@ func ValidateURL(u string, success func(string)) bool {
     }
     
     return true
+}
+
+func UpdateAction(a *models.Action, text string) {
+    text = url.QueryEscape(text)
+    
+    a.Content = strings.Replace(a.Content, "{_text_}", text, -1)
 }
