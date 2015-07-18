@@ -4,17 +4,20 @@ import (
     "database/sql"
     "os"
     
-    _ "github.com/go-sql-driver/mysql"
+    _ "github.com/lib/pq"
     "fmt"
 )
 
 func DatabaseThing() string {
-    db, _ := sql.Open("mysql", os.Getenv("CLEARDB_DATABASE_URL"))
+    dbUrl := os.Getenv("DATABASE_URL")
+    database, _ := sql.Open("postgres", dbUrl)
     
-    fmt.Println(os.Getenv("CLEARDB_DATABASE_URL"))
+//    fmt.Printf("db: %v, err: %v\n", db, err)
+//    fmt.Println(os.Getenv("CLEARDB_DATABASE_URL"))
     
     var name string
-    db.QueryRow("SELECT bot_name FROM bot").Scan(&name)
+    database.QueryRow("SELECT bot_name FROM bot").Scan(&name)
+    fmt.Printf("name: %v\n", name)
     
     return name
 }

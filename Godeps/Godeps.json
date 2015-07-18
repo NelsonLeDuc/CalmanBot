@@ -3,17 +3,17 @@
 	"GoVersion": "go1.4.2",
 	"Deps": [
 		{
-			"ImportPath": "github.com/go-sql-driver/mysql",
-			"Comment": "v1.2-112-gfb72997",
-			"Rev": "fb7299726d2e68745a8805b14f2ff44b5c2cfa84"
-		},
-		{
 			"ImportPath": "github.com/gorilla/context",
 			"Rev": "215affda49addc4c8ef7e2534915df2c8c35c6cd"
 		},
 		{
 			"ImportPath": "github.com/gorilla/mux",
 			"Rev": "104068abd5cf50032c57aecbf2b8ce5b0a08a2cb"
+		},
+		{
+			"ImportPath": "github.com/lib/pq",
+			"Comment": "go1.0-cutoff-56-gdc50b6a",
+			"Rev": "dc50b6ad2d3ee836442cf3389009c7cd1e64bb43"
 		}
 	]
 }
