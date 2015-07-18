@@ -66,8 +66,15 @@ func HandleURLAction(a models.Action, w http.ResponseWriter) {
 
 
 func ValidateURL(u string, success func(string)) bool {
+    
+    client := http.Client{}
     if isValidHTTPURLString(u) {
-        resp, err := http.Get(u)
+        req, err := http.NewRequest("HEAD", u, nil)
+        if err != nil {
+            return false
+        }
+        
+        resp, err := client.Do(req)
         
         if err == nil && resp.StatusCode >= 200 && resp.StatusCode < 300 {
             success(u)
