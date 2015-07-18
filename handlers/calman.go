@@ -7,6 +7,8 @@ import (
     "io/ioutil"
     "strings"
     "github.com/nelsonleduc/calmanbot/handlers/models"
+    "encoding/json"
+    "bytes"
 )
 
 type GMHook struct {}
@@ -21,14 +23,16 @@ func HandleCalman(w http.ResponseWriter, r *http.Request) {
     message := ParseMessageJSON(r.Body)
     
     act, _ := models.FetchAction(12)
-    UpdateAction(&act, message)
+    updateAction(&act, message)
+    
+    bot, _ := models.FetchBot(message.GroupID)
     
     if act.IsURLType() {
-        HandleURLAction(act, w)
+        handleURLAction(act, w, bot)
     }
 }
 
-func HandleURLAction(a models.Action, w http.ResponseWriter) {
+func handleURLAction(a models.Action, w http.ResponseWriter, b models.Bot) {
     
     fmt.Fprintln(w, a)
     resp, err := http.Get(a.Content)
@@ -41,7 +45,8 @@ func HandleURLAction(a models.Action, w http.ResponseWriter) {
         
         success := func(s string) {
             fmt.Printf("Success: %v\n", s)
-            fmt.Fprintln(w, s)
+//            fmt.Fprintln(w, s)
+            postText(b, s)
         }
         failure := func() {
             //Actually perform fallback here
@@ -49,7 +54,7 @@ func HandleURLAction(a models.Action, w http.ResponseWriter) {
             fmt.Printf("Failed")
         }
         
-        if !ValidateURL(str, success) {
+        if !validateURL(str, success) {
             fmt.Printf("Invalid URL: %v\n", str)
             
             oldStr := str
@@ -57,7 +62,7 @@ func HandleURLAction(a models.Action, w http.ResponseWriter) {
                 str = ParseJSON(content, pathString)
             }
             
-            if !ValidateURL(str, success) {
+            if !validateURL(str, success) {
                 failure()
             }
         }
@@ -66,8 +71,42 @@ func HandleURLAction(a models.Action, w http.ResponseWriter) {
     resp.Body.Close()
 }
 
+func postText(b models.Bot, t string) {
+    
+    t = url.QueryEscape(t)
+    postURL := "https://api.groupme.com/v3/bots/post"
+    postBody := map[string]string {
+        "bot_id": b.Key,
+        "text": t,
+    }
+    
+    encoded, _ := json.Marshal(postBody)
+    
+    http.Post(postURL, "application/json", bytes.NewReader(encoded))
+}
 
-func ValidateURL(u string, success func(string)) bool {
+//    Parse.Cloud.httpRequest({
+//        url: "https://api.groupme.com/v3/bots/post?bot_id=" + gBot.key + "&text=" + encodeURIComponent(text),
+//        method: "POST",
+//        success: function (httpResponse) {
+//            var GroupMessage = Parse.Object.extend("GroupMessage");
+//            var groupMessage = new GroupMessage();
+// 
+//            groupMessage.save({
+//                text: original,
+//                user: gUser.name,
+//                imageURL: text,
+//                groupIdentifier: gBot.groupID,
+//                userIdentifier: gUser.ID
+//            });
+//            res.send("Done Posting Image")
+//        },
+//        error: function (httpResponse) {
+//            res.send(418, "Stop brewing me!")
+//        }
+//    });
+
+func validateURL(u string, success func(string)) bool {
     
     client := http.Client{}
     if isValidHTTPURLString(u) {
@@ -90,7 +129,7 @@ func ValidateURL(u string, success func(string)) bool {
     return true
 }
 
-func UpdateAction(a *models.Action, m models.Message) {
+func updateAction(a *models.Action, m models.Message) {
     text := url.QueryEscape(m.Text)
     
     a.Content = strings.Replace(a.Content, "{_text_}", text, -1)
