@@ -7,10 +7,10 @@ import (
     _ "github.com/go-sql-driver/mysql"
 )
 
-func DatabaseThing() bool {
+func DatabaseThing() error {
     _, err := sql.Open("mysql", os.Getenv("CLEARDB_DATABASE_URL"))
     
-    return err != nil
+    return err
 }
 
 //
