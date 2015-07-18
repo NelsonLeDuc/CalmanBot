@@ -19,6 +19,6 @@ var routes = Routes{
         "CalmanRespond",
         "POST",
         "/botHook",
-        handlers.HandleCalman,
+        handlers.PrintMessage,
     },
 }
