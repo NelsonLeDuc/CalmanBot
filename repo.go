@@ -6,9 +6,10 @@ import (
 )
 
 func DatabaseThing() *sql.DB {
-    db, _ := sql.Open("mysql", "")
+    dbUser= := ""
+    _, err := sql.Open("mysql", dbUser)
     
-    return db
+    return err != nil
 }
 
 //

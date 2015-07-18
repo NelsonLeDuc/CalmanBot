@@ -8,7 +8,7 @@ import (
 
 func Logger(inner http.Handler, name string) http.Handler {
     db := DatabaseThing()
-    log.Println(db)
+    log.Printf("database open: %v\n", db)
     
     return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
         start := time.Now()
