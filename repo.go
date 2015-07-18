@@ -16,7 +16,7 @@ func DatabaseThing() string {
 //    fmt.Println(os.Getenv("CLEARDB_DATABASE_URL"))
     
     var name string
-    database.QueryRow("SELECT bot_name FROM bot").Scan(&name)
+    database.QueryRow("SELECT name FROM bots").Scan(&name)
     fmt.Printf("name: %v\n", name)
     
     return name
