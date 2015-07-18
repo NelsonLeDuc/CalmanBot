@@ -33,17 +33,38 @@ func Name() string {
 func FetchBot(id string) (Bot, error) {
     row := currentDB.QueryRow("SELECT * from bots WHERE group_id = $1", id)
     
-    var (
-        groupName string
-        groupID string
-        botName string
-        key string
-    )
-    
-    err := row.Scan(&groupID, &groupName, &botName, &key)
+    var bot Bot
+    err := row.Scan(&bot.GroupID, &bot.GroupName, &bot.BotName, &bot.Key)
     if err != nil {
         return Bot{}, err
     }
     
-    return Bot{groupName, groupID, botName, key}, nil
+    return bot, nil
+}
+
+func FetchActions(primary bool) ([]Action, error) {
+    
+    queryStr := "SELECT type, content, data_path, pattern, main, priority, fallback_action from actions"
+    if primary {
+        queryStr += " WHERE main = 'TRUE'"
+    }
+    rows, err := currentDB.Query(queryStr)
+    defer rows.Close()
+    
+    if err != nil {
+        return make([]Action, 0), err
+    }
+    
+    actions := make([]Action, 1)
+    for rows.Next() {
+        var act Action
+        err := rows.Scan(&act.ContentType, &act.Content, &act.DataPath, &act.Pattern, &act.Primary, &act.Priority, &act.FallbackAction)
+        if err != nil {
+            continue
+        }
+        
+        actions = append(actions, act)
+    }
+    
+    return actions, nil
 }
