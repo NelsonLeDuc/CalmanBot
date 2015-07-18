@@ -26,7 +26,8 @@ func HandleCalman(w http.ResponseWriter, r *http.Request) {
     actions, _ := models.FetchActions(true)
     var act models.Action
     for _, a := range actions {
-        match, _ := regexp.MatchString(*a.Pattern, message.Text)
+        match, err := regexp.MatchString(*a.Pattern, message.Text)
+        fmt.Println(err)
         if match {
             act = a
             break
