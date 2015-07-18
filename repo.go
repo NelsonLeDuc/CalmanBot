@@ -2,12 +2,13 @@ package main
 
 import (
     "database/sql"
+    "os"
+    
     _ "github.com/go-sql-driver/mysql"
 )
 
 func DatabaseThing() bool {
-    dbUser := ""
-    _, err := sql.Open("mysql", dbUser)
+    _, err := sql.Open("mysql", os.Getenv("CLEARDB_DATABASE_URL"))
     
     return err != nil
 }
