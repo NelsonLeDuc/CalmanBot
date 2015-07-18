@@ -1,6 +1,16 @@
 package main
 
-//import "fmt"
+import (
+    "database/sql"
+    _ "github.com/go-sql-driver/mysql"
+)
+
+func DatabaseThing() *sql.DB {
+    db, _ := sql.Open("mysql", "")
+    
+    return db
+}
+
 //
 //var currentId int
 //
