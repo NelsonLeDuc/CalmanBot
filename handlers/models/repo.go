@@ -69,5 +69,14 @@ func FetchActions(primary bool) ([]Action, error) {
     return actions, nil
 }
 
-//func FetchAction() (Action, error) {
-//}
+func FetchAction(id int) (Action, error) {
+    row := currentDB.QueryRow("SELECT type, content, data_path, pattern, main, priority, fallback_action from actions WHERE id = $1", id)
+    
+    var act Action
+    err := row.Scan(&act.ContentType, &act.Content, &act.DataPath, &act.Pattern, &act.Primary, &act.Priority, &act.FallbackAction)
+    if err != nil {
+        return Action{}, err
+    }
+    
+    return act, nil
+}
