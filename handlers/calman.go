@@ -33,7 +33,7 @@ func HandleURLAction(a models.Action, w http.ResponseWriter) {
     if err == nil {
         
         content, _ := ioutil.ReadAll(resp.Body)
-        pathString := "responseData.results.{_randomInt_}.url"
+        pathString := *a.DataPath
         
         str := ParseJSON(content, pathString)
         
