@@ -24,14 +24,8 @@ func connect() *sql.DB {
 }
 
 func Name() string {
-    tx, _ := currentDB.Begin()
-    
-    stmt, _ := tx.Prepare("SELECT name FROM bots WHERE id = '$1'")
     var name string
-    stmt.QueryRow("1").Scan(&name)
-    stmt.Close()
-    
-    tx.Commit()
+    currentDB.QueryRow("SELECT name from bots WHERE id = '1'").Scan(&name)
     
     return name
 }
