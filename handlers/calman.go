@@ -9,6 +9,7 @@ import (
     "github.com/nelsonleduc/calmanbot/handlers/models"
     "encoding/json"
     "bytes"
+    "regexp"
 )
 
 type GMHook struct {}
@@ -22,7 +23,16 @@ func HandleCalman(w http.ResponseWriter, r *http.Request) {
     
     message := ParseMessageJSON(r.Body)
     
-    act, _ := models.FetchAction(12)
+    actions, _ := models.FetchActions(true)
+    var act models.Action
+    for _, a := range actions {
+        match, _ := regexp.MatchString(*a.Pattern, message.Text)
+        if match {
+            act = a
+            break
+        }
+    }
+    
     updateAction(&act, message)
     
     bot, _ := models.FetchBot(message.GroupID)
@@ -45,7 +55,6 @@ func handleURLAction(a models.Action, w http.ResponseWriter, b models.Bot) {
         
         success := func(s string) {
             fmt.Printf("Success: %v\n", s)
-//            fmt.Fprintln(w, s)
             postText(b, s)
         }
         failure := func() {
@@ -83,27 +92,6 @@ func postText(b models.Bot, t string) {
     
     http.Post(postURL, "application/json", bytes.NewReader(encoded))
 }
-
-//    Parse.Cloud.httpRequest({
-//        url: "https://api.groupme.com/v3/bots/post?bot_id=" + gBot.key + "&text=" + encodeURIComponent(text),
-//        method: "POST",
-//        success: function (httpResponse) {
-//            var GroupMessage = Parse.Object.extend("GroupMessage");
-//            var groupMessage = new GroupMessage();
-// 
-//            groupMessage.save({
-//                text: original,
-//                user: gUser.name,
-//                imageURL: text,
-//                groupIdentifier: gBot.groupID,
-//                userIdentifier: gUser.ID
-//            });
-//            res.send("Done Posting Image")
-//        },
-//        error: function (httpResponse) {
-//            res.send(418, "Stop brewing me!")
-//        }
-//    });
 
 func validateURL(u string, success func(string)) bool {
     
