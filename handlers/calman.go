@@ -27,6 +27,8 @@ func HandleCalman(w http.ResponseWriter, r *http.Request) {
 }
 
 func HandleURLAction(a models.Action, w http.ResponseWriter) {
+    
+    fmt.Fprintln(w, a)
     resp, err := http.Get(a.Content)
     if err == nil {
         
