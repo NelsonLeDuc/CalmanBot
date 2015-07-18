@@ -73,7 +73,6 @@ func handleURLAction(a models.Action, w http.ResponseWriter, b models.Bot) {
 
 func postText(b models.Bot, t string) {
     
-    t = url.QueryEscape(t)
     postURL := "https://api.groupme.com/v3/bots/post"
     postBody := map[string]string {
         "bot_id": b.Key,
