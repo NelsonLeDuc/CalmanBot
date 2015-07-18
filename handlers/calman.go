@@ -18,18 +18,14 @@ func isValidHTTPURLString(s string)  bool {
 
 func HandleCalman(w http.ResponseWriter, r *http.Request) {
     
+    message := ParseMessageJSON(r.Body)
+    
     act, _ := models.FetchAction(12)
-    UpdateAction(&act, models.Message{Text: "cats"})
+    UpdateAction(&act, message)
     
     if act.IsURLType() {
         HandleURLAction(act, w)
     }
-}
-
-func PrintMessage(w http.ResponseWriter, r *http.Request) {
-    
-    cont, _ := ioutil.ReadAll(r.Body)
-    fmt.Println(string(cont))
 }
 
 func HandleURLAction(a models.Action, w http.ResponseWriter) {
