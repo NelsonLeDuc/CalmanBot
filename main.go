@@ -1,34 +1,16 @@
 package main
 
 import (
-	"log"
-	"net/http"
+    "log"
+    "net/http"
     "os"
-//    "database/sql"
-//    "fmt"
 )
 
-type LocalHandler struct {}
-
-func (l LocalHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-    
-    var server http.Handler
-    path := r.URL.Path
-    if path == "/addBot" {
-        server = ABHook{}
-    } else {
-        server = GMHook{} 
-    }
-    
-    server.ServeHTTP(w, r)
-}
-
 func main() {
-    var l LocalHandler
-    err := http.ListenAndServe(GetPort(), l)
-	if err != nil {
-		log.Fatal(err)
-	}
+    
+    router := NewRouter()
+    
+    log.Fatal(http.ListenAndServe(GetPort(), router))
 }
 
 func GetPort() string {

@@ -1,5 +1,14 @@
 {
-	"ImportPath": "nelsonleduc.com/calmanbot",
+	"ImportPath": "github.com/nelsonleduc/calmanbot",
 	"GoVersion": "go1.4.2",
-	"Deps": []
+	"Deps": [
+		{
+			"ImportPath": "github.com/gorilla/context",
+			"Rev": "215affda49addc4c8ef7e2534915df2c8c35c6cd"
+		},
+		{
+			"ImportPath": "github.com/gorilla/mux",
+			"Rev": "104068abd5cf50032c57aecbf2b8ce5b0a08a2cb"
+		}
+	]
 }
