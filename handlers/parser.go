@@ -7,6 +7,7 @@ import (
     "strconv"
     "math/rand"
     "time"
+    "github.com/nelsonleduc/calmanbot/handlers/models"
 )
 
 func ParseJSON(bytes []byte, path string) string {
@@ -39,8 +40,8 @@ func ParseJSON(bytes []byte, path string) string {
     return stuff.(string)
 }
 
-func ParseMessageJSON(reader io.Reader) Message {
-    message := new(Message)
+func ParseMessageJSON(reader io.Reader) models.Message {
+    message := new(models.Message)
     json.NewDecoder(reader).Decode(message)
     
     return *message

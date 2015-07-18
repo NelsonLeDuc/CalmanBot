@@ -1,4 +1,4 @@
-package handlers
+package models
 
 type Message struct {
     GroupID string      `json:"group_id"`

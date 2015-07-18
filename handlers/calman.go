@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"net/http"
     "net/url"
-//    "strings"
     "io/ioutil"
+    "github.com/nelsonleduc/calmanbot/handlers/models"
 )
 
 type GMHook struct {}
@@ -19,6 +19,9 @@ func HandleCalman(w http.ResponseWriter, r *http.Request) {
     
     resp, err := http.Get("http://ajax.googleapis.com/ajax/services/search/images?v=1.0&as_filetype=gif&imgtype=animated&rsz=8&q=ambiguity%20strikes%20again")
     if err == nil {
+        
+        bot, _ := models.FetchBot("9214876")
+        fmt.Fprintln(w, bot)
         
         content, _ := ioutil.ReadAll(resp.Body)
         pathString := "responseData.results.{_randomInt_}.url"

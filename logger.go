@@ -4,8 +4,6 @@ import (
     "log"
     "net/http"
     "time"
-    
-    "fmt"
 )
 
 func Logger(inner http.Handler, name string) http.Handler {    
@@ -13,8 +11,6 @@ func Logger(inner http.Handler, name string) http.Handler {
         start := time.Now()
 
         inner.ServeHTTP(w, r)
-        
-        fmt.Println(Name())
         
         log.Printf(
             "%s\t%s\t%s\t%s",
