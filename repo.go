@@ -5,10 +5,13 @@ import (
     "os"
     
     _ "github.com/go-sql-driver/mysql"
+    "fmt"
 )
 
 func DatabaseThing() string {
     db, _ := sql.Open("mysql", os.Getenv("CLEARDB_DATABASE_URL"))
+    
+    fmt.Println(os.Getenv("CLEARDB_DATABASE_URL"))
     
     var name string
     db.QueryRow("SELECT bot_name FROM bot").Scan(&name)
