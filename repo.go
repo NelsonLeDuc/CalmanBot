@@ -3,59 +3,35 @@ package main
 import (
     "database/sql"
     "os"
+    "log"
     
     _ "github.com/lib/pq"
-    "fmt"
 )
 
-func DatabaseThing() string {
+var currentDB *sql.DB
+
+func init() {
+    currentDB = connect()
+}
+
+func connect() *sql.DB {
     dbUrl := os.Getenv("DATABASE_URL")
-    database, _ := sql.Open("postgres", dbUrl)
+    database, err := sql.Open("postgres", dbUrl)
+    if err != nil {
+        log.Fatalf("[x] Could not open the connection to the database. Reason: %s", err.Error())
+    }
+    return database
+}
+
+func Name() string {
+    tx, _ := currentDB.Begin()
     
-//    fmt.Printf("db: %v, err: %v\n", db, err)
-//    fmt.Println(os.Getenv("CLEARDB_DATABASE_URL"))
-    
+    stmt, _ := tx.Prepare("SELECT name FROM bots WHERE id = '$1'")
     var name string
-    database.QueryRow("SELECT name FROM bots").Scan(&name)
-    fmt.Printf("name: %v\n", name)
+    stmt.QueryRow(1).Scan(&name)
+    stmt.Close()
+    
+    tx.Commit()
     
     return name
 }
-
-//
-//var currentId int
-//
-//var todos Todos
-//
-//// Give us some seed data
-//func init() {
-//    RepoCreateTodo(Todo{Name: "Write presentation"})
-//    RepoCreateTodo(Todo{Name: "Host meetup"})
-//}
-//
-//func RepoFindTodo(id int) Todo {
-//    for _, t := range todos {
-//        if t.Id == id {
-//            return t
-//        }
-//    }
-//    // return empty Todo if not found
-//    return Todo{}
-//}
-//
-//func RepoCreateTodo(t Todo) Todo {
-//    currentId += 1
-//    t.Id = currentId
-//    todos = append(todos, t)
-//    return t
-//}
-//
-//func RepoDestroyTodo(id int) error {
-//    for i, t := range todos {
-//        if t.Id == id {
-//            todos = append(todos[:i], todos[i+1:]...)
-//            return nil
-//        }
-//    }
-//    return fmt.Errorf("Could not find Todo with id of %d to delete", id)
-//}
