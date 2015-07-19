@@ -46,10 +46,20 @@ func HandleCalman(w http.ResponseWriter, r *http.Request) {
     
     updateAction(&act, sMatch)
     
-    var postString string
-    if act.IsURLType() {
-        postString = handleURLAction(act, w, bot)
+    postString := ""
+    for {
+        if act.IsURLType() {
+            postString = handleURLAction(act, w, bot)
+        }
+        
+        if postString != "" || act.FallbackAction == nil {
+            break
+        } else {
+            act, _ = models.FetchAction(*act.FallbackAction)
+        }
     }
+    
+
     
     if postString != "" {
         postText(bot, postString)
