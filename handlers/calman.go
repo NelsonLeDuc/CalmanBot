@@ -50,6 +50,8 @@ func HandleCalman(w http.ResponseWriter, r *http.Request) {
     for {
         if act.IsURLType() {
             postString = handleURLAction(act, w, bot)
+        } else {
+            postString = act.Content
         }
         
         if postString != "" || act.FallbackAction == nil {
@@ -62,6 +64,8 @@ func HandleCalman(w http.ResponseWriter, r *http.Request) {
 
     
     if postString != "" {
+        fmt.Printf("Action: %v\n", act.Content)
+        fmt.Printf("Posting: %v\n", postString)
         postText(bot, postString)
     }
 }
@@ -108,7 +112,6 @@ func handleURLAction(a models.Action, w http.ResponseWriter, b models.Bot) strin
 
 func postText(b models.Bot, t string) {
     
-    fmt.Printf("Posting: %v\n", t)
     postURL := "https://api.groupme.com/v3/bots/post"
     postBody := map[string]string {
         "bot_id": b.Key,
