@@ -23,7 +23,7 @@ func HandleCalman(w http.ResponseWriter, r *http.Request) {
     message := ParseMessageJSON(r.Body)
     bot, _ := models.FetchBot(message.GroupID)
     
-    if !strings.HasPrefix(strings.ToLower(message.Text), strings.ToLower("@" + bot.BotName)) {
+    if !strings.HasPrefix(strings.ToLower(message.Text[1:]), strings.ToLower(bot.BotName)) {
         return
     }
     
