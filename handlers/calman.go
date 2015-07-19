@@ -46,20 +46,20 @@ func HandleCalman(w http.ResponseWriter, r *http.Request) {
     
     updateAction(&act, sMatch)
     
+    var postString string
     if act.IsURLType() {
-        handleURLAction(act, w, bot)
+        postString = handleURLAction(act, w, bot)
+    }
+    
+    if postString != "" {
+        postText(bot, postString)
     }
 }
 
-func handleURLAction(a models.Action, w http.ResponseWriter, b models.Bot) {
+func handleURLAction(a models.Action, w http.ResponseWriter, b models.Bot) string {
     
     fmt.Fprintln(w, a)
     resp, err := http.Get(a.Content)
-    
-    failure := func() {
-        
-        fmt.Println("Failed")
-    }
     
     if err == nil {
         
@@ -68,15 +68,10 @@ func handleURLAction(a models.Action, w http.ResponseWriter, b models.Bot) {
         
         str := ParseJSON(content, pathString)
         if str == "" {
-            failure()
+            return ""
         } else {
-        
-            success := func(s string) {
-                fmt.Printf("Success: %v\n", s)
-                postText(b, s)
-            }
 
-            if !validateURL(str, success) {
+            if !validateURL(str) {
                 fmt.Printf("Invalid URL: %v\n", str)
 
                 oldStr := str
@@ -84,16 +79,21 @@ func handleURLAction(a models.Action, w http.ResponseWriter, b models.Bot) {
                     str = ParseJSON(content, pathString)
                 }
 
-                if !validateURL(str, success) {
-                    failure()
+                if !validateURL(str) {
+                    return ""
+                } else {
+                    return str
                 }
+            } else {
+                return str
             }
         }
     } else {
-        failure()
+        return ""
     }
     
     resp.Body.Close()
+    return ""
 }
 
 func postText(b models.Bot, t string) {
@@ -109,7 +109,7 @@ func postText(b models.Bot, t string) {
     http.Post(postURL, "application/json", bytes.NewReader(encoded))
 }
 
-func validateURL(u string, success func(string)) bool {
+func validateURL(u string) bool {
     
     client := http.Client{}
     if isValidHTTPURLString(u) {
@@ -121,12 +121,12 @@ func validateURL(u string, success func(string)) bool {
         resp, err := client.Do(req)
         
         if err == nil && resp.StatusCode >= 200 && resp.StatusCode < 300 {
-            success(u)
+            return true
         } else {
             return false
         }
     } else {
-        success(u)
+        return true
     }
     
     return true
