@@ -98,6 +98,7 @@ func handleURLAction(a models.Action, w http.ResponseWriter, b models.Bot) strin
 
 func postText(b models.Bot, t string) {
     
+    fmt.Printf("Posting: %v\n", t)
     postURL := "https://api.groupme.com/v3/bots/post"
     postBody := map[string]string {
         "bot_id": b.Key,
