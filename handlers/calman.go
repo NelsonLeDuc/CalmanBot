@@ -10,9 +10,8 @@ import (
     "encoding/json"
     "bytes"
     "regexp"
+    "sort"
 )
-
-type GMHook struct {}
 
 func isValidHTTPURLString(s string)  bool {
     URL, _ := url.Parse(s)
@@ -29,6 +28,8 @@ func HandleCalman(w http.ResponseWriter, r *http.Request) {
     }
     
     actions, _ := models.FetchActions(true)
+    sort.Sort(models.ByPriority(actions))
+    
     var (
         act models.Action
         sMatch string
@@ -37,7 +38,6 @@ func HandleCalman(w http.ResponseWriter, r *http.Request) {
         r, _ := regexp.Compile(*a.Pattern)
         matched := r.FindStringSubmatch(message.Text)
         if len(matched) > 1 && matched[1] != "" {
-            fmt.Println(matched)
             sMatch = matched[1]
             act = a
             break
