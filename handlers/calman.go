@@ -31,19 +31,20 @@ func HandleCalman(w http.ResponseWriter, r *http.Request) {
     actions, _ := models.FetchActions(true)
     var (
         act models.Action
-        matched string
+        sMatch string
     )
     for _, a := range actions {
-        r, err := regexp.Compile(*a.Pattern)
-        matched = r.FindString(message.Text)
-        fmt.Println(err)
-        if matched != "" {
+        r, _ := regexp.Compile(*a.Pattern)
+        matched := r.FindStringSubmatch(message.Text)
+        if len(matched) > 1 && matched[1] != "" {
+            fmt.Println(matched)
+            sMatch = matched[1]
             act = a
             break
         }
     }
     
-    updateAction(&act, matched)
+    updateAction(&act, sMatch)
     
     if act.IsURLType() {
         handleURLAction(act, w, bot)
@@ -54,21 +55,25 @@ func handleURLAction(a models.Action, w http.ResponseWriter, b models.Bot) {
     
     fmt.Fprintln(w, a)
     resp, err := http.Get(a.Content)
+    
+    failure := func() {
+        
+        fmt.Printf("Failed")
+    }
+    
     if err == nil {
         
         content, _ := ioutil.ReadAll(resp.Body)
         pathString := *a.DataPath
         
         str := ParseJSON(content, pathString)
+        if str == "" {
+            failure()
+        }
         
         success := func(s string) {
             fmt.Printf("Success: %v\n", s)
             postText(b, s)
-        }
-        failure := func() {
-            //Actually perform fallback here
-            
-            fmt.Printf("Failed")
         }
         
         if !validateURL(str, success) {
@@ -83,6 +88,8 @@ func handleURLAction(a models.Action, w http.ResponseWriter, b models.Bot) {
                 failure()
             }
         }
+    } else {
+        failure()
     }
     
     resp.Body.Close()
