@@ -22,21 +22,28 @@ func isValidHTTPURLString(s string)  bool {
 func HandleCalman(w http.ResponseWriter, r *http.Request) {
     
     message := ParseMessageJSON(r.Body)
+    bot, _ := models.FetchBot(message.GroupID)
+    
+    if !strings.HasPrefix(message.Text, "@" + bot.BotName) {
+        return
+    }
     
     actions, _ := models.FetchActions(true)
-    var act models.Action
+    var (
+        act models.Action
+        matched string
+    )
     for _, a := range actions {
-        match, err := regexp.MatchString(*a.Pattern, message.Text)
+        r, err := regexp.Compile(*a.Pattern)
+        matched = r.FindString(message.Text)
         fmt.Println(err)
-        if match {
+        if matched != "" {
             act = a
             break
         }
     }
     
-    updateAction(&act, message)
-    
-    bot, _ := models.FetchBot(message.GroupID)
+    updateAction(&act, matched)
     
     if act.IsURLType() {
         handleURLAction(act, w, bot)
@@ -117,8 +124,8 @@ func validateURL(u string, success func(string)) bool {
     return true
 }
 
-func updateAction(a *models.Action, m models.Message) {
-    text := url.QueryEscape(m.Text)
+func updateAction(a *models.Action, text string) {
+    text = url.QueryEscape(text)
     
     a.Content = strings.Replace(a.Content, "{_text_}", text, -1)
 }
