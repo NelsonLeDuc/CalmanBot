@@ -23,7 +23,7 @@ func HandleCalman(w http.ResponseWriter, r *http.Request) {
     message := ParseMessageJSON(r.Body)
     bot, _ := models.FetchBot(message.GroupID)
     
-    if !strings.HasPrefix(message.Text, "@" + bot.BotName) {
+    if !strings.HasPrefix(strings.ToLower(message.Text), strings.ToLower("@" + bot.BotName)) {
         return
     }
     
@@ -35,7 +35,7 @@ func HandleCalman(w http.ResponseWriter, r *http.Request) {
         sMatch string
     )
     for _, a := range actions {
-        r, _ := regexp.Compile(*a.Pattern)
+        r, _ := regexp.Compile("(?i)" + *a.Pattern)
         matched := r.FindStringSubmatch(message.Text)
         if len(matched) > 1 && matched[1] != "" {
             sMatch = matched[1]
