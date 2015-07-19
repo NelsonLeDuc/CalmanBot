@@ -23,7 +23,7 @@ func HandleCalman(w http.ResponseWriter, r *http.Request) {
     message := ParseMessageJSON(r.Body)
     bot, _ := models.FetchBot(message.GroupID)
     
-    if !strings.HasPrefix(strings.ToLower(message.Text[1:]), strings.ToLower(bot.BotName)) {
+    if len(message.Text) < 1 || !strings.HasPrefix(strings.ToLower(message.Text[1:]), strings.ToLower(bot.BotName)) {
         return
     }
     
@@ -133,7 +133,7 @@ func validateURL(u string) bool {
         
         resp, err := client.Do(req)
         
-        if err == nil && resp.StatusCode >= 200 && resp.StatusCode < 300 {
+        if err == nil && resp.StatusCode >= 200 && resp.StatusCode < 300 && strings.HasPrefix(resp.Header.Get("Content-Type"), "image") {
             return true
         } else {
             return false
