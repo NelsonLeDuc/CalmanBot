@@ -42,7 +42,12 @@ func ParseJSON(bytes []byte, path string) string {
         }
     }
     
-    return stuff.(string)
+    switch t := stuff.(type) {
+    case float64:
+        return strconv.FormatFloat(t, 'f', -1, 64)
+    default:
+        return stuff.(string)
+    }
 }
 
 func ParseMessageJSON(reader io.Reader) models.Message {
