@@ -58,7 +58,7 @@ func handleURLAction(a models.Action, w http.ResponseWriter, b models.Bot) {
     
     failure := func() {
         
-        fmt.Printf("Failed")
+        fmt.Println("Failed")
     }
     
     if err == nil {
@@ -69,23 +69,24 @@ func handleURLAction(a models.Action, w http.ResponseWriter, b models.Bot) {
         str := ParseJSON(content, pathString)
         if str == "" {
             failure()
-        }
+        } else {
         
-        success := func(s string) {
-            fmt.Printf("Success: %v\n", s)
-            postText(b, s)
-        }
-        
-        if !validateURL(str, success) {
-            fmt.Printf("Invalid URL: %v\n", str)
-            
-            oldStr := str
-            for i := 0; i < 3 && oldStr == str; i++ {
-                str = ParseJSON(content, pathString)
+            success := func(s string) {
+                fmt.Printf("Success: %v\n", s)
+                postText(b, s)
             }
-            
+
             if !validateURL(str, success) {
-                failure()
+                fmt.Printf("Invalid URL: %v\n", str)
+
+                oldStr := str
+                for i := 0; i < 3 && oldStr == str; i++ {
+                    str = ParseJSON(content, pathString)
+                }
+
+                if !validateURL(str, success) {
+                    failure()
+                }
             }
         }
     } else {
