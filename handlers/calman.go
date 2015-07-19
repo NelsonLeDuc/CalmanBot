@@ -44,10 +44,9 @@ func HandleCalman(w http.ResponseWriter, r *http.Request) {
         }
     }
     
-    updateAction(&act, sMatch)
-    
     postString := ""
     for {
+        updateAction(&act, sMatch)
         if act.IsURLType() {
             postString = handleURLAction(act, w, bot)
         } else {
