@@ -1,29 +1,29 @@
 package groupme
 
 type gmMessage struct {
-	groupID  string `json:"group_id"`
-	userName string `json:"name"`
-	userID   string `json:"id"`
-	text     string `json:"text"`
-	userType string `json:"sender_type"`
+	GID         string `json:"group_id"`
+	Name        string `json:"name"`
+	UID         string `json:"id"`
+	MessageText string `json:"text"`
+	SenderType  string `json:"sender_type"`
 }
 
 func (m gmMessage) GroupID() string {
-	return m.groupID
+	return m.GID
 }
 
 func (m gmMessage) UserName() string {
-	return m.userName
+	return m.Name
 }
 
 func (m gmMessage) UserID() string {
-	return m.userID
+	return m.UID
 }
 
 func (m gmMessage) Text() string {
-	return m.text
+	return m.MessageText
 }
 
 func (m gmMessage) UserType() string {
-	return m.userType
+	return m.SenderType
 }
