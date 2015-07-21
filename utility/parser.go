@@ -1,9 +1,7 @@
-package handlers
+package utility
 
 import (
 	"encoding/json"
-	"github.com/nelsonleduc/calmanbot/handlers/models"
-	"io"
 	"math/rand"
 	"strconv"
 	"strings"
@@ -48,13 +46,6 @@ func ParseJSON(bytes []byte, path string) string {
 	default:
 		return stuff.(string)
 	}
-}
-
-func ParseMessageJSON(reader io.Reader) models.Message {
-	message := new(models.Message)
-	json.NewDecoder(reader).Decode(message)
-
-	return *message
 }
 
 func ConvertedComponent(s string, stuff interface{}) string {
