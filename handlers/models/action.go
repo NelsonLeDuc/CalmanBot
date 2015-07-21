@@ -1,5 +1,7 @@
 package models
 
+import "strings"
+
 type Action struct {
 	ContentType    string
 	Content        string
@@ -11,7 +13,11 @@ type Action struct {
 }
 
 func (a Action) IsURLType() bool {
-	return a.ContentType == "URL"
+	return strings.HasPrefix(a.ContentType, "URL")
+}
+
+func (a Action) IsImageType() bool {
+	return strings.HasSuffix(a.ContentType, "IMAGE")
 }
 
 type ByPriority []Action
