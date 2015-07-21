@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/nelsonleduc/calmanbot/handlers/models"
 	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
 	"regexp"
@@ -82,7 +83,7 @@ func handleURLAction(a models.Action, w http.ResponseWriter, b models.Bot) strin
 			return ""
 		} else {
 
-			if !validateURL(str) {
+			if !validateURL(str, a.IsImageType()) {
 				fmt.Printf("Invalid URL: %v\n", str)
 
 				oldStr := str
@@ -90,7 +91,7 @@ func handleURLAction(a models.Action, w http.ResponseWriter, b models.Bot) strin
 					str = ParseJSON(content, pathString)
 				}
 
-				if !validateURL(str) {
+				if !validateURL(str, a.IsImageType()) {
 					return ""
 				} else {
 					return str
@@ -120,18 +121,18 @@ func postText(b models.Bot, t string) {
 	http.Post(postURL, "application/json", bytes.NewReader(encoded))
 }
 
-func validateURL(u string) bool {
+func validateURL(u string, image bool) bool {
 
-	client := http.Client{}
 	if isValidHTTPURLString(u) {
-		req, err := http.NewRequest("HEAD", u, nil)
-		if err != nil {
-			return false
-		}
 
-		resp, err := client.Do(req)
-
-		if err == nil && resp.StatusCode >= 200 && resp.StatusCode < 300 && strings.HasPrefix(resp.Header.Get("Content-Type"), "image") {
+		resp, err := http.Get(u)
+		defer resp.Body.Close()
+		
+		if err == nil && resp.StatusCode >= 200 && resp.StatusCode < 300 {
+			if image {
+				return validateImage(resp.Body)
+			}
+			
 			return true
 		} else {
 			return false
@@ -147,4 +148,9 @@ func updateAction(a *models.Action, text string) {
 	text = url.QueryEscape(text)
 
 	a.Content = strings.Replace(a.Content, "{_text_}", text, -1)
+}
+
+//TODO: Move this out of here
+func validateImage(r io.Reader) bool {
+	return true
 }
