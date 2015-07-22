@@ -31,12 +31,12 @@ func nonNilInt(val *int) interface{} {
 	if val != nil {
 		return *val
 	}
-	return "None"
+	return ""
 }
 
 func nonNilStr(val *string) string {
 	if val != nil {
 		return *val
 	}
-	return "None"
+	return ""
 }
