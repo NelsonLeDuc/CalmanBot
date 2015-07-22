@@ -1,8 +1,6 @@
 package handlers
 
 import (
-	"bytes"
-	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -10,21 +8,25 @@ import (
 	"regexp"
 	"sort"
 	"strings"
+	
 	"github.com/nelsonleduc/calmanbot/handlers/models"
-	"github.com/nelsonleduc/calmanbot/image"
+	"github.com/nelsonleduc/calmanbot/utility"
+	"github.com/nelsonleduc/calmanbot/service"
+	_ "github.com/nelsonleduc/calmanbot/groupme"
 )
 
-func isValidHTTPURLString(s string) bool {
-	URL, _ := url.Parse(s)
-	return (URL.Scheme == "http" || URL.Scheme == "https")
+var messageService service.Service
+
+func init() {
+	messageService = *service.NewService("groupme")
 }
 
 func HandleCalman(w http.ResponseWriter, r *http.Request) {
 
-	message := ParseMessageJSON(r.Body)
-	bot, _ := models.FetchBot(message.GroupID)
+	message := messageService.MessageFromJSON(r.Body)
+	bot, _ := models.FetchBot(message.GroupID())
 
-	if len(message.Text) < 1 || !strings.HasPrefix(strings.ToLower(message.Text[1:]), strings.ToLower(bot.BotName)) {
+	if len(message.Text()) < 1 || !strings.HasPrefix(strings.ToLower(message.Text()[1:]), strings.ToLower(bot.BotName)) {
 		return
 	}
 
@@ -37,7 +39,7 @@ func HandleCalman(w http.ResponseWriter, r *http.Request) {
 	)
 	for _, a := range actions {
 		r, _ := regexp.Compile("(?i)" + *a.Pattern)
-		matched := r.FindStringSubmatch(message.Text)
+		matched := r.FindStringSubmatch(message.Text())
 		if len(matched) > 1 && matched[1] != "" {
 			sMatch = matched[1]
 			act = a
@@ -64,7 +66,7 @@ func HandleCalman(w http.ResponseWriter, r *http.Request) {
 	if postString != "" {
 		fmt.Printf("Action: %v\n", act.Content)
 		fmt.Printf("Posting: %v\n", postString)
-		postText(bot, postString)
+		messageService.PostText(bot.Key, postString)
 	}
 }
 
@@ -78,20 +80,20 @@ func handleURLAction(a models.Action, w http.ResponseWriter, b models.Bot) strin
 		content, _ := ioutil.ReadAll(resp.Body)
 		pathString := *a.DataPath
 
-		str := ParseJSON(content, pathString)
+		str := utility.ParseJSON(content, pathString)
 		if str == "" {
 			return ""
 		} else {
 
-			if !validateURL(str, a.IsImageType()) {
+			if !utility.ValidateURL(str, a.IsImageType()) {
 				fmt.Printf("Invalid URL: %v\n", str)
 
 				oldStr := str
 				for i := 0; i < 3 && oldStr == str; i++ {
-					str = ParseJSON(content, pathString)
+					str = utility.ParseJSON(content, pathString)
 				}
 
-				if !validateURL(str, a.IsImageType()) {
+				if !utility.ValidateURL(str, a.IsImageType()) {
 					return ""
 				} else {
 					return str
@@ -106,42 +108,6 @@ func handleURLAction(a models.Action, w http.ResponseWriter, b models.Bot) strin
 
 	resp.Body.Close()
 	return ""
-}
-
-func postText(b models.Bot, t string) {
-
-	postURL := "https://api.groupme.com/v3/bots/post"
-	postBody := map[string]string{
-		"bot_id": b.Key,
-		"text":   t,
-	}
-
-	encoded, _ := json.Marshal(postBody)
-
-	http.Post(postURL, "application/json", bytes.NewReader(encoded))
-}
-
-func validateURL(u string, isImage bool) bool {
-
-	if isValidHTTPURLString(u) {
-
-		resp, err := http.Get(u)
-		defer resp.Body.Close()
-
-		if err == nil && resp.StatusCode >= 200 && resp.StatusCode < 300 {
-			if isImage {
-				return image.ValidateImage(resp.Body)
-			}
-
-			return true
-		} else {
-			return false
-		}
-	} else {
-		return true
-	}
-
-	return true
 }
 
 func updateAction(a *models.Action, text string) {

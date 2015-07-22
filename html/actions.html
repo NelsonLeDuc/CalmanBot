@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<!-- Latest compiled and minified CSS -->
+		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
+
+		<!-- Optional theme -->
+		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap-theme.min.css">
+
+		<!-- Latest compiled and minified JavaScript -->
+		<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+	</head>
+	<body>
+		<div class="container-fluid">
+			<h2>Actions</h2>
+			<div class="table-responsive">
+				<table class="table table-bordered">
+					<thead>
+						<tr>
+							<th>#</th>
+							<th>Type</th>
+							<th>Content</th>
+							<th>Data Path</th>
+							<th>Pattern</th>
+							<th>Main</th>
+							<th>Priority</th>
+							<th>Fallback Action</th>
+						</tr>
+					</thead>
+					<tbody>
+						{{range .}}
+						<tr>
+							<td>{{.ID}}</td>
+							<td>{{.ContentType}}</td>
+							<td>{{.Content}}</td>
+							<td>{{nonNilStr .DataPath}}</td>
+							<td>{{nonNilStr .Pattern}}</td>
+							<td>{{.Primary}}</td>
+							<td>{{.Priority}}</td>
+							<td>{{nonNilInt .FallbackAction}}</td>
+						</tr>
+						{{end}}
+					</tbody>
+				</table>
+			</div>
+		</div>
+	</body>
+</html>

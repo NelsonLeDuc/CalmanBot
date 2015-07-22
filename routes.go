@@ -18,7 +18,13 @@ var routes = Routes{
 	Route{
 		"CalmanRespond",
 		"POST",
-		"/botHook",
+		"/bots/botHook",
 		handlers.HandleCalman,
+	},
+	Route{
+		"ActionsRespond",
+		"GET",
+		"/actions",
+		handlers.HandleActions,
 	},
 }
