@@ -42,7 +42,7 @@ func FetchBot(id string) (Bot, error) {
 	return bot, nil
 }
 
-const actionsSQLQuery = "SELECT id, type, content, data_path, pattern, main, priority, fallback_action from actions"
+const actionsSQLQuery = "SELECT id, type, content, data_path, pattern, main, priority, fallback_action, post_text from actions"
 
 func FetchActions(primary bool) ([]Action, error) {
 
@@ -72,7 +72,7 @@ func FetchActions(primary bool) ([]Action, error) {
 }
 
 func FetchAction(id int) (Action, error) {
-	row := currentDB.QueryRow(actionsSQLQuery + "WHERE id = $1", id)
+	row := currentDB.QueryRow(actionsSQLQuery + " WHERE id = $1", id)
 
 	var act Action
 	err := row.Scan(&act.ID, &act.ContentType, &act.Content, &act.DataPath, &act.Pattern, &act.Primary, &act.Priority, &act.FallbackAction, &act.PostText)
