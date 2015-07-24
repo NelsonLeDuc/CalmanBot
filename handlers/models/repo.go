@@ -42,9 +42,11 @@ func FetchBot(id string) (Bot, error) {
 	return bot, nil
 }
 
+const actionsSQLQuery = "SELECT id, type, content, data_path, pattern, main, priority, fallback_action from actions"
+
 func FetchActions(primary bool) ([]Action, error) {
 
-	queryStr := "SELECT id, type, content, data_path, pattern, main, priority, fallback_action from actions"
+	queryStr := actionsSQLQuery
 	if primary {
 		queryStr += " WHERE main = 'TRUE'"
 	}
@@ -58,7 +60,7 @@ func FetchActions(primary bool) ([]Action, error) {
 	actions := []Action{}
 	for rows.Next() {
 		var act Action
-		err := rows.Scan(&act.ID, &act.ContentType, &act.Content, &act.DataPath, &act.Pattern, &act.Primary, &act.Priority, &act.FallbackAction)
+		err := rows.Scan(&act.ID, &act.ContentType, &act.Content, &act.DataPath, &act.Pattern, &act.Primary, &act.Priority, &act.FallbackAction, &act.PostText)
 		if err != nil {
 			log.Fatalln("Couldn't scan")
 		} else {
@@ -70,10 +72,10 @@ func FetchActions(primary bool) ([]Action, error) {
 }
 
 func FetchAction(id int) (Action, error) {
-	row := currentDB.QueryRow("SELECT id, type, content, data_path, pattern, main, priority, fallback_action from actions WHERE id = $1", id)
+	row := currentDB.QueryRow(actionsSQLQuery + "WHERE id = $1", id)
 
 	var act Action
-	err := row.Scan(&act.ID, &act.ContentType, &act.Content, &act.DataPath, &act.Pattern, &act.Primary, &act.Priority, &act.FallbackAction)
+	err := row.Scan(&act.ID, &act.ContentType, &act.Content, &act.DataPath, &act.Pattern, &act.Primary, &act.Priority, &act.FallbackAction, &act.PostText)
 	if err != nil {
 		return Action{}, err
 	}

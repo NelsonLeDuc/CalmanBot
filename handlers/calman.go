@@ -8,6 +8,7 @@ import (
 	"regexp"
 	"sort"
 	"strings"
+	"os"
 	
 	"github.com/nelsonleduc/calmanbot/handlers/models"
 	"github.com/nelsonleduc/calmanbot/utility"
@@ -62,7 +63,9 @@ func HandleCalman(w http.ResponseWriter, r *http.Request) {
 			act, _ = models.FetchAction(*act.FallbackAction)
 		}
 	}
-
+	
+	postString = updatedPostText(act, postString)
+	
 	if postString != "" {
 		fmt.Printf("Action: %v\n", act.Content)
 		fmt.Printf("Posting: %v\n", postString)
@@ -114,4 +117,24 @@ func updateAction(a *models.Action, text string) {
 	text = url.QueryEscape(text)
 
 	a.Content = strings.Replace(a.Content, "{_text_}", text, -1)
+	
+	r, _ := regexp.Compile("(?i){_key\\((.+)\\)_}")
+	matched := r.FindStringSubmatch(a.Content)
+	keyVal := os.Getenv(matched[1] + "_key")
+	a.Content = strings.Replace(a.Content, matched[0], keyVal, -1)
+}
+
+func updatedPostText(a models.Action, text string) string {
+	if a.PostText == nil {
+		return text
+	}
+	
+	var updated string
+	if strings.Contains(*a.PostText, "{_text_}") {
+		updated = strings.Replace(*a.PostText, "{_text_}", text, -1)
+	} else {
+		updated = *a.PostText + text
+	}
+	
+	return updated
 }

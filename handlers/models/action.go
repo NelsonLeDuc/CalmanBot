@@ -11,6 +11,7 @@ type Action struct {
 	Primary        bool
 	Priority       int
 	ID             int
+	PostText       *string
 }
 
 func (a Action) IsURLType() bool {
