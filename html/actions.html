@@ -19,6 +19,7 @@
 							<th>Content</th>
 							<th>Data Path</th>
 							<th>Pattern</th>
+							<th>Post Text</th>
 							<th>Main</th>
 							<th>Priority</th>
 							<th>Fallback Action</th>
@@ -32,6 +33,7 @@
 							<td>{{.Content}}</td>
 							<td>{{nonNilStr .DataPath}}</td>
 							<td>{{nonNilStr .Pattern}}</td>
+							<td>{{nonNilStr .PostText}}</td>
 							<td>{{.Primary}}</td>
 							<td>{{.Priority}}</td>
 							<td>{{nonNilInt .FallbackAction}}</td>
