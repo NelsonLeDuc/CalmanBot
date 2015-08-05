@@ -30,11 +30,10 @@ func actionFetch(whereStr string, values []interface{}) ([]Action, error) {
 	queryStr := fmt.Sprintf("SELECT %s FROM actions", sqlstruct.Columns(Action{}))
 
 	rows, err := currentDB.Query(queryStr+" "+whereStr, values...)
-	defer rows.Close()
-
 	if err != nil {
 		return []Action{}, err
 	}
+	defer rows.Close()
 
 	actions := []Action{}
 	for rows.Next() {
@@ -50,12 +49,11 @@ func actionFetch(whereStr string, values []interface{}) ([]Action, error) {
 
 //Public Methods
 func FetchBot(id string) (Bot, error) {
-	rows, err := currentDB.Query(fmt.Sprintf("SELECT %s FROM bots", sqlstruct.Columns(Bot{})), id)
-	defer rows.Close()
-
+	rows, err := currentDB.Query(fmt.Sprintf("SELECT %s FROM bots WHERE group_id = $1", sqlstruct.Columns(Bot{})), id)
 	if err != nil {
 		return Bot{}, err
 	}
+	defer rows.Close()
 
 	rows.Next()
 	var bot Bot
