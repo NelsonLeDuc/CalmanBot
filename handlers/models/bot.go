@@ -1,8 +1,8 @@
 package models
 
 type Bot struct {
-	GroupName string
-	GroupID   string
-	BotName   string
-	Key       string
+	GroupName string `sql:"group_name"`
+	GroupID   string `sql:"group_id"`
+	BotName   string `sql:"bot_name"`
+	Key       string `sql:"key"`
 }

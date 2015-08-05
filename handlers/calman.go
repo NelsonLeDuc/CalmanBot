@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -16,15 +17,8 @@ import (
 	"github.com/nelsonleduc/calmanbot/utility"
 )
 
-var messageService service.Service
+func HandleCalman(message service.Message, service service.Service) {
 
-func init() {
-	messageService = *service.NewService("groupme")
-}
-
-func HandleCalman(w http.ResponseWriter, r *http.Request) {
-
-	message := messageService.MessageFromJSON(r.Body)
 	bot, _ := models.FetchBot(message.GroupID())
 
 	if len(message.Text()) < 1 || !strings.HasPrefix(strings.ToLower(message.Text()[1:]), strings.ToLower(bot.BotName)) {
@@ -48,16 +42,19 @@ func HandleCalman(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	postString := ""
+	var (
+		postString string
+		err        error
+	)
 	for {
 		updateAction(&act, sMatch)
 		if act.IsURLType() {
-			postString = handleURLAction(act, w, bot)
+			postString, err = handleURLAction(act, bot)
 		} else {
 			postString = act.Content
 		}
 
-		if postString != "" || act.FallbackAction == nil {
+		if err != nil || postString != "" || act.FallbackAction == nil {
 			break
 		} else {
 			act, _ = models.FetchAction(*act.FallbackAction)
@@ -69,48 +66,36 @@ func HandleCalman(w http.ResponseWriter, r *http.Request) {
 	if postString != "" {
 		fmt.Printf("Action: %v\n", act.Content)
 		fmt.Printf("Posting: %v\n", postString)
-		messageService.PostText(bot.Key, postString)
+		service.PostText(bot.Key, postString)
 	}
 }
 
-func handleURLAction(a models.Action, w http.ResponseWriter, b models.Bot) string {
+func handleURLAction(a models.Action, b models.Bot) (string, error) {
 
-	fmt.Fprintln(w, a)
 	resp, err := http.Get(a.Content)
+	defer resp.Body.Close()
 
-	if err == nil {
-
-		content, _ := ioutil.ReadAll(resp.Body)
-		pathString := *a.DataPath
-
-		str := utility.ParseJSON(content, pathString)
-		if str == "" {
-			return ""
-		} else {
-
-			if !utility.ValidateURL(str, a.IsImageType()) {
-				fmt.Printf("Invalid URL: %v\n", str)
-
-				oldStr := str
-				for i := 0; i < 3 && oldStr == str; i++ {
-					str = utility.ParseJSON(content, pathString)
-				}
-
-				if !utility.ValidateURL(str, a.IsImageType()) {
-					return ""
-				} else {
-					return str
-				}
-			} else {
-				return str
-			}
-		}
-	} else {
-		return ""
+	if err != nil {
+		return "", err
 	}
 
-	resp.Body.Close()
-	return ""
+	content, _ := ioutil.ReadAll(resp.Body)
+	pathString := *a.DataPath
+
+	str := utility.ParseJSON(content, pathString)
+
+	oldStr := str
+	for i := 0; i < 3 && oldStr == str; i++ {
+		if !utility.ValidateURL(str, a.IsImageType()) {
+			oldStr = str
+			str = utility.ParseJSON(content, pathString)
+			fmt.Printf("Invalid URL: %v\n", str)
+		} else {
+			return str, nil
+		}
+	}
+
+	return "", errors.New("Failed to handle URL action")
 }
 
 func updateAction(a *models.Action, text string) {

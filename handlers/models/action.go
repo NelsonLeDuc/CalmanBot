@@ -3,15 +3,15 @@ package models
 import "strings"
 
 type Action struct {
-	ContentType    string
-	Content        string
-	DataPath       *string
-	Pattern        *string
-	FallbackAction *int
-	Primary        bool
-	Priority       int
-	ID             int
-	PostText       *string
+	ContentType    string  `sql:"type"`
+	Content        string  `sql:"content"`
+	DataPath       *string `sql:"data_path"`
+	Pattern        *string `sql:"pattern"`
+	FallbackAction *int    `sql:"fallback_action"`
+	Primary        bool    `sql:"main"`
+	Priority       int     `sql:"priority"`
+	ID             int     `sql:"id"`
+	PostText       *string `sql:"post_text"`
 }
 
 func (a Action) IsURLType() bool {

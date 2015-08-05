@@ -2,9 +2,11 @@ package models
 
 import (
 	"database/sql"
+	"fmt"
 	"log"
 	"os"
 
+	"github.com/kisielk/sqlstruct"
 	_ "github.com/lib/pq"
 )
 
@@ -23,47 +25,21 @@ func connect() *sql.DB {
 	return database
 }
 
-func Name() string {
-	var name string
-	currentDB.QueryRow("SELECT name from bots WHERE id = '1'").Scan(&name)
+func actionFetch(whereStr string, values []interface{}) ([]Action, error) {
 
-	return name
-}
+	queryStr := fmt.Sprintf("SELECT %s FROM actions", sqlstruct.Columns(Action{}))
 
-func FetchBot(id string) (Bot, error) {
-	row := currentDB.QueryRow("SELECT * from bots WHERE group_id = $1", id)
-
-	var bot Bot
-	err := row.Scan(&bot.GroupID, &bot.GroupName, &bot.BotName, &bot.Key)
-	if err != nil {
-		return Bot{}, err
-	}
-
-	return bot, nil
-}
-
-const actionsSQLQuery = "SELECT id, type, content, data_path, pattern, main, priority, fallback_action, post_text from actions"
-
-func FetchActions(primary bool) ([]Action, error) {
-
-	queryStr := actionsSQLQuery
-	if primary {
-		queryStr += " WHERE main = 'TRUE'"
-	}
-	rows, err := currentDB.Query(queryStr)
-	defer rows.Close()
-
+	rows, err := currentDB.Query(queryStr+" "+whereStr, values...)
 	if err != nil {
 		return []Action{}, err
 	}
+	defer rows.Close()
 
 	actions := []Action{}
 	for rows.Next() {
 		var act Action
-		err := rows.Scan(&act.ID, &act.ContentType, &act.Content, &act.DataPath, &act.Pattern, &act.Primary, &act.Priority, &act.FallbackAction, &act.PostText)
-		if err != nil {
-			log.Fatalln("Couldn't scan")
-		} else {
+		err := sqlstruct.Scan(&act, rows)
+		if err == nil {
 			actions = append(actions, act)
 		}
 	}
@@ -71,14 +47,41 @@ func FetchActions(primary bool) ([]Action, error) {
 	return actions, nil
 }
 
-func FetchAction(id int) (Action, error) {
-	row := currentDB.QueryRow(actionsSQLQuery + " WHERE id = $1", id)
-
-	var act Action
-	err := row.Scan(&act.ID, &act.ContentType, &act.Content, &act.DataPath, &act.Pattern, &act.Primary, &act.Priority, &act.FallbackAction, &act.PostText)
+//Public Methods
+func FetchBot(id string) (Bot, error) {
+	rows, err := currentDB.Query(fmt.Sprintf("SELECT %s FROM bots WHERE group_id = $1", sqlstruct.Columns(Bot{})), id)
 	if err != nil {
-		return Action{}, err
+		return Bot{}, err
+	}
+	defer rows.Close()
+
+	rows.Next()
+	var bot Bot
+	err = sqlstruct.Scan(&bot, rows)
+
+	return bot, err
+}
+
+func FetchActions(primary bool) ([]Action, error) {
+	var (
+		values   []interface{}
+		queryStr string
+	)
+	if primary {
+		queryStr = "WHERE main = $1"
+		values = append(values, primary)
 	}
 
-	return act, nil
+	return actionFetch(queryStr, values)
+}
+
+func FetchAction(id int) (Action, error) {
+	actions, err := actionFetch("WHERE id = $1", []interface{}{id})
+
+	var action Action
+	if len(actions) > 0 {
+		action = actions[0]
+	}
+
+	return action, err
 }
