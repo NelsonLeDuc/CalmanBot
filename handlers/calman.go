@@ -16,15 +16,8 @@ import (
 	"github.com/nelsonleduc/calmanbot/utility"
 )
 
-var messageService service.Service
+func HandleCalman(message service.Message, service service.Service) {
 
-func init() {
-	messageService = *service.NewService("groupme")
-}
-
-func HandleCalman(w http.ResponseWriter, r *http.Request) {
-
-	message := messageService.MessageFromJSON(r.Body)
 	bot, _ := models.FetchBot(message.GroupID())
 
 	if len(message.Text()) < 1 || !strings.HasPrefix(strings.ToLower(message.Text()[1:]), strings.ToLower(bot.BotName)) {
@@ -52,7 +45,7 @@ func HandleCalman(w http.ResponseWriter, r *http.Request) {
 	for {
 		updateAction(&act, sMatch)
 		if act.IsURLType() {
-			postString = handleURLAction(act, w, bot)
+			postString = handleURLAction(act, bot)
 		} else {
 			postString = act.Content
 		}
@@ -69,13 +62,12 @@ func HandleCalman(w http.ResponseWriter, r *http.Request) {
 	if postString != "" {
 		fmt.Printf("Action: %v\n", act.Content)
 		fmt.Printf("Posting: %v\n", postString)
-		messageService.PostText(bot.Key, postString)
+		service.PostText(bot.Key, postString)
 	}
 }
 
-func handleURLAction(a models.Action, w http.ResponseWriter, b models.Bot) string {
+func handleURLAction(a models.Action, b models.Bot) string {
 
-	fmt.Fprintln(w, a)
 	resp, err := http.Get(a.Content)
 
 	if err == nil {
