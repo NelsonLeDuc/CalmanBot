@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -41,16 +42,19 @@ func HandleCalman(message service.Message, service service.Service) {
 		}
 	}
 
-	postString := ""
+	var (
+		postString string
+		err        error
+	)
 	for {
 		updateAction(&act, sMatch)
 		if act.IsURLType() {
-			postString = handleURLAction(act, bot)
+			postString, err = handleURLAction(act, bot)
 		} else {
 			postString = act.Content
 		}
 
-		if postString != "" || act.FallbackAction == nil {
+		if err != nil || postString != "" || act.FallbackAction == nil {
 			break
 		} else {
 			act, _ = models.FetchAction(*act.FallbackAction)
@@ -66,43 +70,32 @@ func HandleCalman(message service.Message, service service.Service) {
 	}
 }
 
-func handleURLAction(a models.Action, b models.Bot) string {
+func handleURLAction(a models.Action, b models.Bot) (string, error) {
 
 	resp, err := http.Get(a.Content)
+	defer resp.Body.Close()
 
-	if err == nil {
-
-		content, _ := ioutil.ReadAll(resp.Body)
-		pathString := *a.DataPath
-
-		str := utility.ParseJSON(content, pathString)
-		if str == "" {
-			return ""
-		} else {
-
-			if !utility.ValidateURL(str, a.IsImageType()) {
-				fmt.Printf("Invalid URL: %v\n", str)
-
-				oldStr := str
-				for i := 0; i < 3 && oldStr == str; i++ {
-					str = utility.ParseJSON(content, pathString)
-				}
-
-				if !utility.ValidateURL(str, a.IsImageType()) {
-					return ""
-				} else {
-					return str
-				}
-			} else {
-				return str
-			}
-		}
-	} else {
-		return ""
+	if err != nil {
+		return "", err
 	}
 
-	resp.Body.Close()
-	return ""
+	content, _ := ioutil.ReadAll(resp.Body)
+	pathString := *a.DataPath
+
+	str := utility.ParseJSON(content, pathString)
+
+	oldStr := str
+	for i := 0; i < 3 && oldStr == str; i++ {
+		if !utility.ValidateURL(str, a.IsImageType()) {
+			oldStr = str
+			str = utility.ParseJSON(content, pathString)
+			fmt.Printf("Invalid URL: %v\n", str)
+		} else {
+			return str, nil
+		}
+	}
+
+	return "", errors.New("Failed to handle URL action")
 }
 
 func updateAction(a *models.Action, text string) {
