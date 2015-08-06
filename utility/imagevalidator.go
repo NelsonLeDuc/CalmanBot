@@ -13,7 +13,7 @@ func ValidateImage(r io.Reader) bool {
 	}
 
 	gif := convertHexSlice([]string{"47", "49", "46"})
-	jpg := convertHexSlice([]string{"FF", "D8", "FF", "E0"})
+	jpg := convertHexSlice([]string{"FF", "D8"})
 	png := convertHexSlice([]string{"89", "50", "4E", "47", "D", "A", "1A", "A"})
 
 	return byteSliceSubset(buf, gif) || byteSliceSubset(buf, jpg) || byteSliceSubset(buf, png)
