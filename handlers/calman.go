@@ -54,7 +54,7 @@ func HandleCalman(message service.Message, service service.Service) {
 			postString = act.Content
 		}
 
-		if err != nil || postString != "" || act.FallbackAction == nil {
+		if (err == nil && postString != "") || act.FallbackAction == nil {
 			break
 		} else {
 			act, _ = models.FetchAction(*act.FallbackAction)
