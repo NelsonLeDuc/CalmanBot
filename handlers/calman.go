@@ -54,7 +54,7 @@ func HandleCalman(message service.Message, service service.Service) {
 			postString = act.Content
 		}
 
-		if err != nil || postString != "" || act.FallbackAction == nil {
+		if (err == nil && postString != "") || act.FallbackAction == nil {
 			break
 		} else {
 			act, _ = models.FetchAction(*act.FallbackAction)
@@ -83,13 +83,10 @@ func handleURLAction(a models.Action, b models.Bot) (string, error) {
 	pathString := *a.DataPath
 
 	str := utility.ParseJSON(content, pathString)
-
-	oldStr := str
-	for i := 0; i < 3 && oldStr == str; i++ {
+	for i := 0; i < 3; i++ {
 		if !utility.ValidateURL(str, a.IsImageType()) {
-			oldStr = str
-			str = utility.ParseJSON(content, pathString)
 			fmt.Printf("Invalid URL: %v\n", str)
+			str = utility.ParseJSON(content, pathString)
 		} else {
 			return str, nil
 		}
