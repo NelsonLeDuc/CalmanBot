@@ -3,7 +3,7 @@ package service
 import "io"
 
 type Service interface {
-	PostText(key, text string) error
+	PostText(key, text string)
 	MessageFromJSON(reader io.Reader) Message
 }
 

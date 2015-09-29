@@ -5,9 +5,12 @@ import (
 	"net/http"
 	"bytes"
 	"io"
+	"time"
 	
 	"github.com/nelsonleduc/calmanbot/service"
 )
+
+const postDelayMilliseconds = 500
 
 func init() {
 	service.AddService("groupme", gmService{})
@@ -15,9 +18,7 @@ func init() {
 
 type gmService struct {}
 
-func (g gmService) PostText(key, text string) error {
-
-	postURL := "https://api.groupme.com/v3/bots/post"
+func (g gmService) PostText(key, text string) {
 	postBody := map[string]string{
 		"bot_id": key,
 		"text":   text,
@@ -25,12 +26,10 @@ func (g gmService) PostText(key, text string) error {
 
 	encoded, err := json.Marshal(postBody)
 	if err != nil {
-		return err
+		return
 	}
 	
-	_, err = http.Post(postURL, "application/json", bytes.NewReader(encoded))
-	
-	return err
+	go postToGroupMe(encoded)
 }
 
 func (g gmService) MessageFromJSON(reader io.Reader) service.Message {
@@ -38,4 +37,11 @@ func (g gmService) MessageFromJSON(reader io.Reader) service.Message {
 	json.NewDecoder(reader).Decode(message)
 	
 	return *message
+}
+
+func postToGroupMe(body []byte) {
+	time.Sleep(postDelayMilliseconds * time.Millisecond)
+
+	postURL := "https://api.groupme.com/v3/bots/post"
+	http.Post(postURL, "application/json", bytes.NewReader(body))
 }
