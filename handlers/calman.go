@@ -19,6 +19,10 @@ import (
 
 func HandleCalman(message service.Message, service service.Service) {
 
+	if message.UserType() != "user" {
+		return
+	}
+
 	bot, _ := models.FetchBot(message.GroupID())
 
 	if len(message.Text()) < 1 || !strings.HasPrefix(strings.ToLower(message.Text()[1:]), strings.ToLower(bot.BotName)) {
