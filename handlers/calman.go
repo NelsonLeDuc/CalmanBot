@@ -25,7 +25,9 @@ func HandleCalman(message service.Message, service service.Service) {
 
 	bot, _ := models.FetchBot(message.GroupID())
 
-	if len(message.Text()) < 1 || !strings.HasPrefix(strings.ToLower(message.Text()[1:]), strings.ToLower(bot.BotName)) {
+	index := strings.Index(strings.ToLower(message.Text()), strings.ToLower(bot.BotName))
+	isEscaped := (index >= 2 && message.Text()[index-2] == '\\')
+	if len(message.Text()) < 1 || index < 1 || isEscaped {
 		return
 	}
 
