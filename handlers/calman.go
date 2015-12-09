@@ -39,7 +39,8 @@ func HandleCalman(message service.Message, service service.Service) {
 		sMatch string
 	)
 	for _, a := range actions {
-		r, _ := regexp.Compile("(?i)" + *a.Pattern)
+		regexString := strings.Replace(*a.Pattern, "{_botname_}", bot.BotName, -1)
+		r, _ := regexp.Compile("(?i)" + regexString)
 		matched := r.FindStringSubmatch(message.Text())
 		if len(matched) > 1 && matched[1] != "" {
 			sMatch = matched[1]
