@@ -1,8 +1,9 @@
 package main
 
 import (
-	"github.com/nelsonleduc/calmanbot/handlers"
 	"net/http"
+
+	"github.com/nelsonleduc/calmanbot/handlers"
 )
 
 type Route struct {
@@ -26,5 +27,11 @@ var routes = Routes{
 		"GET",
 		"/actions",
 		handlers.HandleActions,
+	},
+	Route{
+		"GoogleImage",
+		"GET",
+		"/animated",
+		handlers.HandleGoogleImage,
 	},
 }
