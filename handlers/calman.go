@@ -69,6 +69,7 @@ func HandleCalman(message service.Message, service service.Service) {
 	}
 
 	postString = updatedPostText(act, postString)
+	postString = utility.ProcessedString(postString)
 
 	if postString != "" {
 		fmt.Printf("Action: %v\n", act.Content)
