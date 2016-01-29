@@ -10,6 +10,7 @@ import (
 	"net/url"
 	"os"
 	"strconv"
+	"sync"
 )
 
 type RootSearch struct {
@@ -67,10 +68,30 @@ func HandleGoogleImage(w http.ResponseWriter, r *http.Request) {
 }
 
 func validLinksFromRoot(root RootSearch) []string {
-	validLinks := []string{}
+	var wg sync.WaitGroup
+	out := make(chan string)
+
 	for _, item := range root.Items {
-		if isValidGIF(item.Link) {
-			validLinks = append(validLinks, item.Link)
+		wg.Add(1)
+		go func(link string) {
+			if isValidGIF(link) {
+				out <- link
+			} else {
+				out <- ""
+			}
+			wg.Done()
+		}(item.Link)
+	}
+
+	go func() {
+		wg.Wait()
+		close(out)
+	}()
+
+	validLinks := []string{}
+	for result := range out {
+		if result != "" {
+			validLinks = append(validLinks, result)
 		}
 	}
 
