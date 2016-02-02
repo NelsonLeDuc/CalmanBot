@@ -125,11 +125,10 @@ func isValidGIF(url string) bool {
 	}
 
 	resp, err := http.Get(url)
-	defer resp.Body.Close()
-
 	if err != nil || resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		return false
 	}
+	defer resp.Body.Close()
 
 	bodyBytes, _ := ioutil.ReadAll(resp.Body)
 	byteReader := bytes.NewReader(bodyBytes)
