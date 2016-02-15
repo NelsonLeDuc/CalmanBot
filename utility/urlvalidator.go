@@ -21,8 +21,6 @@ func ValidateURL(u string, isImage bool) bool {
 		} else {
 			return false
 		}
-	} else {
-		return true
 	}
 
 	return true
