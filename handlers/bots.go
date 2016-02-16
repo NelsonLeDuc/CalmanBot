@@ -15,6 +15,7 @@ func init() {
 func HandleBotHook(w http.ResponseWriter, r *http.Request) {
 
 	message := groupmeService.MessageFromJSON(r.Body)
+	cache := NewSmartCache(groupmeService.ServiceMonitor())
 
-	HandleCalman(message, groupmeService)
+	HandleCalman(message, groupmeService, cache)
 }

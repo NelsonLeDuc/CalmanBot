@@ -48,6 +48,10 @@ func (g gmService) MessageFromJSON(reader io.Reader) service.Message {
 	return *message
 }
 
+func (g gmService) ServiceMonitor() *service.Monitor {
+	return nil
+}
+
 func postToGroupMe(body []byte) {
 	time.Sleep(postDelayMilliseconds * time.Millisecond)
 
