@@ -11,9 +11,9 @@ import (
 )
 
 type Cached struct {
-	id     int    `sql:"id"`
-	query  string `sql:"query"`
-	result string `sql:"result"`
+	ID     int    `sql:"id"`
+	Query  string `sql:"query"`
+	Result string `sql:"result"`
 }
 
 type SmartCache struct {
