@@ -28,7 +28,7 @@ func (g gmService) PostText(key, text string) {
 		go func(key, message string) {
 			postBody := map[string]string{
 				"bot_id": key,
-				"text":   text,
+				"text":   message,
 			}
 
 			encoded, err := json.Marshal(postBody)
