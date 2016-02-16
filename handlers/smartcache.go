@@ -58,6 +58,8 @@ func cacheFetch(whereStr string, values []interface{}) ([]Cached, error) {
 
 	queryStr := fmt.Sprintf("SELECT %s FROM cached", sqlstruct.Columns(Cached{}))
 
+	fmt.Println(queryStr)
+
 	rows, err := currentDB.Query(queryStr+" "+whereStr, values...)
 	if err != nil {
 		return []Cached{}, err
