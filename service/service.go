@@ -5,7 +5,7 @@ import "io"
 type Service interface {
 	PostText(key, text string, cacheID int, groupMessage Message)
 	MessageFromJSON(reader io.Reader) Message
-	ServiceMonitor() *Monitor
+	ServiceMonitor() (Monitor, error)
 }
 
 type Message interface {

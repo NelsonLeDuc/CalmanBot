@@ -2,8 +2,11 @@ package groupme
 
 import (
 	"database/sql"
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"log"
+	"net/http"
 	"os"
 
 	"github.com/kisielk/sqlstruct"
@@ -12,6 +15,24 @@ import (
 type GroupmeMonitor struct{}
 
 func (g GroupmeMonitor) ValueFor(cachedID int) int {
+	posts, _ := postFetch("WHERE cache_id = $1", []interface{}{cachedID})
+
+	token := os.Getenv("groupMeID")
+	getURL := "https://api.groupme.com/v3/groups/" + posts[0].GroupID + "/likes?period=day&token=" + token
+	resp, _ := http.Get(getURL)
+
+	body, _ := ioutil.ReadAll(resp.Body)
+
+	var wrapper gmMessageWrapper
+	json.Unmarshal(body, &wrapper)
+
+	for _, message := range wrapper.Response.Messages {
+		if message.MessageID() == posts[0].MessageID {
+			fmt.Print("FOUND -- ")
+			fmt.Println(message)
+		}
+	}
+
 	return 1
 }
 
@@ -21,10 +42,11 @@ func cachePost(cacheID int, messageID, groupID string) {
 }
 
 type GroupmePost struct {
-	ID      int    `sql:"id"`
-	CacheID int    `sql:"cache_id"`
-	Key     string `sql:"key"`
-	Likes   int    `sql:"likes"`
+	ID        int    `sql:"id"`
+	CacheID   int    `sql:"cache_id"`
+	Likes     int    `sql:"likes"`
+	MessageID string `sql:"message_id"`
+	GroupID   string `sql:"group_id"`
 }
 
 //Temp DB
@@ -45,7 +67,7 @@ func connect() *sql.DB {
 
 func postFetch(whereStr string, values []interface{}) ([]GroupmePost, error) {
 
-	queryStr := fmt.Sprintf("SELECT %s FROM cached", sqlstruct.Columns(GroupmePost{}))
+	queryStr := fmt.Sprintf("SELECT %s FROM groupme_posts", sqlstruct.Columns(GroupmePost{}))
 
 	fmt.Println(queryStr)
 

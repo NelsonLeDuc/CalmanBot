@@ -17,18 +17,19 @@ type Cached struct {
 }
 
 type SmartCache struct {
-	monitor *service.Monitor
+	monitor service.Monitor
 }
 
-func NewSmartCache(monitor *service.Monitor) SmartCache {
+func NewSmartCache(monitor service.Monitor) SmartCache {
 	return SmartCache{monitor}
 }
 
 func (s SmartCache) CachedResponse(message string) *string {
 
-	cached, _ := cacheFetch("where query = $1", []interface{}{message})
+	cached, _ := cacheFetch("WHERE query = $1", []interface{}{message})
 
-	fmt.Println(cached)
+	first := cached[0]
+	s.monitor.ValueFor(first.ID)
 
 	return nil
 }

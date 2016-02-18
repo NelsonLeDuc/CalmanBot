@@ -3,7 +3,6 @@ package groupme
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -48,7 +47,6 @@ func (g gmService) PostText(key, text string, cacheID int, groupMessage service.
 
 type gmMessageWrapper struct {
 	Response struct {
-		Count    int         `json:"count"`
 		Messages []gmMessage `json:"messages"`
 	} `json:"response"`
 }
@@ -63,9 +61,6 @@ func messageID(message service.Message) string {
 	var wrapper gmMessageWrapper
 	json.Unmarshal(body, &wrapper)
 
-	fmt.Print(wrapper.Response)
-	fmt.Println(wrapper.Response.Messages[0])
-
 	return wrapper.Response.Messages[0].MessageID()
 }
 
@@ -76,8 +71,8 @@ func (g gmService) MessageFromJSON(reader io.Reader) service.Message {
 	return *message
 }
 
-func (g gmService) ServiceMonitor() *service.Monitor {
-	return nil
+func (g gmService) ServiceMonitor() (service.Monitor, error) {
+	return GroupmeMonitor{}, nil
 }
 
 func postToGroupMe(body []byte) {
