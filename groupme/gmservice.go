@@ -40,8 +40,8 @@ func (g gmService) PostText(key, text string, cacheID int, groupMessage service.
 			}
 
 			postToGroupMe(encoded)
-			cachePost(cacheID, key)
-			messageID(groupMessage)
+			mID := messageID(groupMessage)
+			cachePost(cacheID, mID)
 		}(key, subText)
 	}
 }
@@ -63,13 +63,10 @@ func messageID(message service.Message) string {
 	var wrapper gmMessageWrapper
 	json.Unmarshal(body, &wrapper)
 
-	fmt.Println(body)
+	fmt.Print(wrapper.Response)
+	fmt.Println(wrapper.Response.Messages[0])
 
-	fmt.Println(getURL)
-	fmt.Println("messages:")
-	fmt.Println(wrapper.Response.Messages)
-
-	return ""
+	return wrapper.Response.Messages[0].MessageID()
 }
 
 func (g gmService) MessageFromJSON(reader io.Reader) service.Message {
