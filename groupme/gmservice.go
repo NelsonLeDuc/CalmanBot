@@ -56,6 +56,8 @@ func messageID(message service.Message) string {
 	messages := make([]gmMessage, 0)
 	json.Unmarshal(body, messages)
 
+	fmt.Println(body)
+
 	fmt.Println(getURL)
 	fmt.Println("messages:")
 	fmt.Println(messages)
