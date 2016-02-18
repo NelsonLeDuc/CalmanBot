@@ -97,8 +97,6 @@ func postFetch(whereStr string, values []interface{}) ([]GroupmePost, error) {
 
 	queryStr := fmt.Sprintf("SELECT %s FROM groupme_posts", sqlstruct.Columns(GroupmePost{}))
 
-	fmt.Println(queryStr)
-
 	rows, err := currentDB.Query(queryStr+" "+whereStr, values...)
 	if err != nil {
 		return []GroupmePost{}, err
