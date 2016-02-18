@@ -3,8 +3,11 @@ package groupme
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io"
+	"io/ioutil"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/nelsonleduc/calmanbot/service"
@@ -20,12 +23,12 @@ func init() {
 
 type gmService struct{}
 
-func (g gmService) PostText(key, text string, cacheID int) {
+func (g gmService) PostText(key, text string, cacheID int, groupMessage service.Message) {
 
 	dividedText := utility.DivideString(text, groupmeLengthLimit)
 
 	for _, subText := range dividedText {
-		go func(key, message string) {
+		func(key, message string) {
 			postBody := map[string]string{
 				"bot_id": key,
 				"text":   message,
@@ -38,8 +41,26 @@ func (g gmService) PostText(key, text string, cacheID int) {
 
 			postToGroupMe(encoded)
 			cachePost(cacheID, key)
+			messageID(groupMessage)
 		}(key, subText)
 	}
+}
+
+func messageID(message service.Message) string {
+	token := os.Getenv("groupMeID")
+	getURL := "https://api.groupme.com/v3/groups/" + message.GroupID() + "/messages?token=" + token + "&after_id=" + message.MessageID()
+	resp, _ := http.Get(getURL)
+
+	body, _ := ioutil.ReadAll(resp.Body)
+
+	messages := make([]gmMessage, 0)
+	json.Unmarshal(body, messages)
+
+	fmt.Println(getURL)
+	fmt.Println("messages:")
+	fmt.Println(messages)
+
+	return ""
 }
 
 func (g gmService) MessageFromJSON(reader io.Reader) service.Message {

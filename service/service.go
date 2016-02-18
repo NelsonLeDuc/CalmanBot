@@ -3,7 +3,7 @@ package service
 import "io"
 
 type Service interface {
-	PostText(key, text string, cacheID int)
+	PostText(key, text string, cacheID int, groupMessage Message)
 	MessageFromJSON(reader io.Reader) Message
 	ServiceMonitor() *Monitor
 }
@@ -12,6 +12,7 @@ type Message interface {
 	GroupID() string
 	UserName() string
 	UserID() string
+	MessageID() string
 	Text() string
 	UserType() string
 }

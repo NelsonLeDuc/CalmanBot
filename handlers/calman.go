@@ -20,7 +20,6 @@ import (
 func HandleCalman(message service.Message, service service.Service, cache SmartCache) {
 
 	if message.UserType() != "user" {
-		fmt.Println(message.UserType())
 		return
 	}
 
@@ -52,7 +51,7 @@ func HandleCalman(message service.Message, service service.Service, cache SmartC
 	if postString != "" {
 		fmt.Printf("Action: %v\n", act.Content)
 		fmt.Printf("Posting: %v\n", postString)
-		service.PostText(bot.Key, postString, cacheID)
+		service.PostText(bot.Key, postString, cacheID, message)
 	}
 }
 
