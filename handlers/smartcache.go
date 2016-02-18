@@ -78,7 +78,7 @@ func (s SmartCache) CacheQuery(query, result string) int {
 
 	var id int
 	err := row.Scan(&id)
-	if err != nil {
+	if err == nil {
 		return id
 	}
 
