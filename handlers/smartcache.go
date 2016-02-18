@@ -30,6 +30,7 @@ func (s SmartCache) CachedResponse(message string) *string {
 	cached, _ := cacheFetch("WHERE query = $1", []interface{}{message})
 
 	if len(cached) == 0 {
+		fmt.Println("Nothing cached")
 		return nil
 	}
 
@@ -37,10 +38,15 @@ func (s SmartCache) CachedResponse(message string) *string {
 	relevantItems := make([]Cached, 0)
 	for _, item := range cached {
 		value := s.monitor.ValueFor(item.ID)
-		if value > 0 {
+		if value > 1 {
 			itemValues = append(itemValues, value)
 			relevantItems = append(relevantItems, item)
 		}
+	}
+
+	if len(relevantItems) == 0 {
+		fmt.Println("Not enough liked items")
+		return nil
 	}
 
 	sum := 0
