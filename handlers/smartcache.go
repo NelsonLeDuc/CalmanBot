@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"math/rand"
 	"os"
 
 	"github.com/kisielk/sqlstruct"
@@ -33,14 +34,42 @@ func (s SmartCache) CachedResponse(message string) *string {
 	}
 
 	itemValues := make([]int, 0)
+	relevantItems := make([]Cached, 0)
 	for _, item := range cached {
 		value := s.monitor.ValueFor(item.ID)
-		itemValues = append(itemValues, value)
+		if value > 0 {
+			itemValues = append(itemValues, value)
+			relevantItems = append(relevantItems, item)
+		}
 	}
 
-	fmt.Println(itemValues)
+	sum := 0
+	for _, i := range itemValues {
+		sum += i
+	}
 
-	return nil
+	if rand.Intn(2) == 0 {
+		fmt.Println("Failed coin flip")
+		return nil
+	}
+
+	index := rand.Intn(sum)
+	currentIndex := 0
+	selectedIndex := 0
+	for idx, num := range itemValues {
+		currentIndex += num
+		if index < currentIndex {
+			selectedIndex = idx
+			break
+		}
+	}
+
+	selectedItem := relevantItems[selectedIndex]
+
+	fmt.Print("Using cache")
+	fmt.Println(selectedItem)
+
+	return &selectedItem.Result
 }
 
 func (s SmartCache) CacheQuery(query, result string) int {

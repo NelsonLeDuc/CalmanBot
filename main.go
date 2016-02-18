@@ -2,12 +2,14 @@ package main
 
 import (
 	"log"
+	"math/rand"
 	"net/http"
 	"os"
+	"time"
 )
 
 func main() {
-
+	rand.Seed(time.Now().UTC().UnixNano())
 	router := NewRouter()
 
 	log.Fatal(http.ListenAndServe(GetPort(), router))
