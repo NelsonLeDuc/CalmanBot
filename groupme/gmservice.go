@@ -3,6 +3,7 @@ package groupme
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -14,6 +15,7 @@ import (
 )
 
 const postDelayMilliseconds = 500
+const messagePollDelayMilliseconds = 500
 const groupmeLengthLimit = 1000
 
 func init() {
@@ -39,8 +41,10 @@ func (g gmService) PostText(key, text string, cacheID int, groupMessage service.
 			}
 
 			postToGroupMe(encoded)
-			mID := messageID(groupMessage)
-			cachePost(cacheID, mID, groupMessage.GroupID())
+			mID, err := messageID(groupMessage)
+			if err == nil {
+				cachePost(cacheID, mID, groupMessage.GroupID())
+			}
 		}(key, subText)
 	}
 }
@@ -51,7 +55,8 @@ type gmMessageWrapper struct {
 	} `json:"response"`
 }
 
-func messageID(message service.Message) string {
+func messageID(message service.Message) (string, error) {
+	time.Sleep(messagePollDelayMilliseconds * time.Millisecond)
 	token := os.Getenv("groupMeID")
 	getURL := "https://api.groupme.com/v3/groups/" + message.GroupID() + "/messages?token=" + token + "&after_id=" + message.MessageID()
 	resp, _ := http.Get(getURL)
@@ -61,7 +66,13 @@ func messageID(message service.Message) string {
 	var wrapper gmMessageWrapper
 	json.Unmarshal(body, &wrapper)
 
-	return wrapper.Response.Messages[0].MessageID()
+	for _, recieved := range wrapper.Response.Messages {
+		if recieved.UserType() == "bot" {
+			return recieved.MessageID(), nil
+		}
+	}
+
+	return "", errors.New("No messages found")
 }
 
 func (g gmService) MessageFromJSON(reader io.Reader) service.Message {
