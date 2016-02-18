@@ -41,16 +41,17 @@ func HandleCalman(message service.Message, service service.Service, cache SmartC
 		postString = *cached
 	} else {
 		postString, act = responseForMessage(message, bot)
-		cache.CacheQuery(message.Text(), postString)
 	}
 
 	postString = updatedPostText(act, postString)
 	postString = utility.ProcessedString(postString)
 
+	cacheID := cache.CacheQuery(message.Text(), postString)
+
 	if postString != "" {
 		fmt.Printf("Action: %v\n", act.Content)
 		fmt.Printf("Posting: %v\n", postString)
-		service.PostText(bot.Key, postString)
+		service.PostText(bot.Key, postString, cacheID)
 	}
 }
 

@@ -33,9 +33,14 @@ func (s SmartCache) CachedResponse(message string) *string {
 	return nil
 }
 
-func (s SmartCache) CacheQuery(query, result string) {
-	queryStr := "INSERT INTO cached(query, result) VALUES($1, $2)"
-	currentDB.Query(queryStr, query, result)
+func (s SmartCache) CacheQuery(query, result string) int {
+	queryStr := "INSERT INTO cached(query, result) VALUES($1, $2) RETURNING id"
+	row := currentDB.QueryRow(queryStr, query, result)
+
+	var id int
+	row.Scan(&id)
+
+	return id
 }
 
 //Temp DB

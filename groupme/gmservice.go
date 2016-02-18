@@ -20,7 +20,7 @@ func init() {
 
 type gmService struct{}
 
-func (g gmService) PostText(key, text string) {
+func (g gmService) PostText(key, text string, cacheID int) {
 
 	dividedText := utility.DivideString(text, groupmeLengthLimit)
 

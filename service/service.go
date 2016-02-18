@@ -3,7 +3,7 @@ package service
 import "io"
 
 type Service interface {
-	PostText(key, text string)
+	PostText(key, text string, cacheID int)
 	MessageFromJSON(reader io.Reader) Message
 	ServiceMonitor() *Monitor
 }
@@ -18,7 +18,6 @@ type Message interface {
 
 type Monitor interface {
 	ValueFor(cachedID int) int
-	Monitor(query, result string, cachedID int)
 }
 
 var serviceMap = map[string]Service{}
