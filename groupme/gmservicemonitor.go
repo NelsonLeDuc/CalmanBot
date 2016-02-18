@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"sync"
 
 	"github.com/kisielk/sqlstruct"
 )
@@ -26,10 +27,12 @@ func (g GroupmeMonitor) ValueFor(cachedID int) int {
 
 	token := os.Getenv("groupMeID")
 
-	likes := 0
+	var wg sync.WaitGroup
+	out := make(chan int)
 
 	for key, ids := range groupedPosts {
-		func(groupID string, messageIDs []string) {
+		wg.Add(1)
+		go func(groupID string, messageIDs []string) {
 			getURL := "https://api.groupme.com/v3/groups/" + groupID + "/likes?period=day&token=" + token
 			resp, _ := http.Get(getURL)
 			body, _ := ioutil.ReadAll(resp.Body)
@@ -40,11 +43,22 @@ func (g GroupmeMonitor) ValueFor(cachedID int) int {
 			for _, message := range wrapper.Response.Messages {
 				for _, id := range messageIDs {
 					if id == message.MessageID() {
-						likes += len(message.FavoritedBy)
+						out <- len(message.FavoritedBy)
 					}
 				}
 			}
+			wg.Done()
 		}(key, ids)
+	}
+
+	go func() {
+		wg.Wait()
+		close(out)
+	}()
+
+	likes := 0
+	for result := range out {
+		likes += result
 	}
 
 	fmt.Print("LIKES - ")
