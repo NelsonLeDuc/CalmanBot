@@ -41,7 +41,7 @@ func (g gmService) PostText(key, text string, cacheID int, groupMessage service.
 
 			postToGroupMe(encoded)
 			mID := messageID(groupMessage)
-			cachePost(cacheID, mID)
+			cachePost(cacheID, mID, groupMessage.GroupID())
 		}(key, subText)
 	}
 }
