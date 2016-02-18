@@ -46,6 +46,13 @@ func (g gmService) PostText(key, text string, cacheID int, groupMessage service.
 	}
 }
 
+type gmMessageWrapper struct {
+	Response struct {
+		Count    int         `json:"count"`
+		Messages []gmMessage `json:"messages"`
+	} `json:"response"`
+}
+
 func messageID(message service.Message) string {
 	token := os.Getenv("groupMeID")
 	getURL := "https://api.groupme.com/v3/groups/" + message.GroupID() + "/messages?token=" + token + "&after_id=" + message.MessageID()
@@ -53,14 +60,14 @@ func messageID(message service.Message) string {
 
 	body, _ := ioutil.ReadAll(resp.Body)
 
-	messages := make([]gmMessage, 0)
-	json.Unmarshal(body, messages)
+	var wrapper gmMessageWrapper
+	json.Unmarshal(body, &wrapper)
 
 	fmt.Println(body)
 
 	fmt.Println(getURL)
 	fmt.Println("messages:")
-	fmt.Println(messages)
+	fmt.Println(wrapper.Response.Messages)
 
 	return ""
 }
