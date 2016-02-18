@@ -15,6 +15,11 @@ func (g GroupmeMonitor) ValueFor(cachedID int) int {
 	return 1
 }
 
+func cachePost(cacheID int, key string) {
+	queryStr := "INSERT INTO groupme_posts(cache_id, key) VALUES($1, $2)"
+	currentDB.QueryRow(queryStr, cacheID, key)
+}
+
 type GroupmePost struct {
 	ID      int    `sql:"id"`
 	CacheID int    `sql:"cache_id"`

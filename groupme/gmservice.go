@@ -37,6 +37,7 @@ func (g gmService) PostText(key, text string, cacheID int) {
 			}
 
 			postToGroupMe(encoded)
+			cachePost(cacheID, key)
 		}(key, subText)
 	}
 }
