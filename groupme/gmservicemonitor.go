@@ -29,7 +29,7 @@ func (g GroupmeMonitor) ValueFor(cachedID int) int {
 	for _, message := range wrapper.Response.Messages {
 		if message.MessageID() == posts[0].MessageID {
 			fmt.Print("FOUND -- ")
-			fmt.Println(message)
+			fmt.Println(len(message.FavoritedBy))
 		}
 	}
 
