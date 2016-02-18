@@ -28,6 +28,10 @@ func (s SmartCache) CachedResponse(message string) *string {
 
 	cached, _ := cacheFetch("WHERE query = $1", []interface{}{message})
 
+	if len(cached) == 0 {
+		return nil
+	}
+
 	first := cached[0]
 	s.monitor.ValueFor(first.ID)
 
