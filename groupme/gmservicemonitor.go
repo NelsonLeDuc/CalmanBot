@@ -17,23 +17,40 @@ type GroupmeMonitor struct{}
 func (g GroupmeMonitor) ValueFor(cachedID int) int {
 	posts, _ := postFetch("WHERE cache_id = $1", []interface{}{cachedID})
 
-	token := os.Getenv("groupMeID")
-	getURL := "https://api.groupme.com/v3/groups/" + posts[0].GroupID + "/likes?period=day&token=" + token
-	resp, _ := http.Get(getURL)
-
-	body, _ := ioutil.ReadAll(resp.Body)
-
-	var wrapper gmMessageWrapper
-	json.Unmarshal(body, &wrapper)
-
-	for _, message := range wrapper.Response.Messages {
-		if message.MessageID() == posts[0].MessageID {
-			fmt.Print("FOUND -- ")
-			fmt.Println(len(message.FavoritedBy))
-		}
+	groupedPosts := make(map[string][]string)
+	for _, post := range posts {
+		slice := groupedPosts[post.GroupID]
+		slice = append(slice, post.MessageID)
+		groupedPosts[post.GroupID] = slice
 	}
 
-	return 1
+	token := os.Getenv("groupMeID")
+
+	likes := 0
+
+	for key, ids := range groupedPosts {
+		func(groupID string, messageIDs []string) {
+			getURL := "https://api.groupme.com/v3/groups/" + groupID + "/likes?period=day&token=" + token
+			resp, _ := http.Get(getURL)
+			body, _ := ioutil.ReadAll(resp.Body)
+
+			var wrapper gmMessageWrapper
+			json.Unmarshal(body, &wrapper)
+
+			for _, message := range wrapper.Response.Messages {
+				for _, id := range messageIDs {
+					if id == message.MessageID() {
+						likes += len(message.FavoritedBy)
+					}
+				}
+			}
+		}(key, ids)
+	}
+
+	fmt.Print("LIKES - ")
+	fmt.Println(likes)
+
+	return likes
 }
 
 func cachePost(cacheID int, messageID, groupID string) {
