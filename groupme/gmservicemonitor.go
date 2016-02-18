@@ -8,7 +8,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"sync"
 
 	"github.com/kisielk/sqlstruct"
 )
@@ -16,52 +15,12 @@ import (
 type GroupmeMonitor struct{}
 
 func (g GroupmeMonitor) ValueFor(cachedID int) int {
-	posts, _ := postFetch("WHERE cache_id = $1", []interface{}{cachedID})
+	row := currentDB.QueryRow("SELECT sum(likes) FROM groupme_posts WHERE cache_id=$1 GROUP BY cache_id", cachedID)
 
-	groupedPosts := make(map[string][]string)
-	for _, post := range posts {
-		slice := groupedPosts[post.GroupID]
-		slice = append(slice, post.MessageID)
-		groupedPosts[post.GroupID] = slice
-	}
+	var likeCount int
+	row.Scan(&likeCount)
 
-	token := os.Getenv("groupMeID")
-
-	var wg sync.WaitGroup
-	out := make(chan int)
-
-	for key, ids := range groupedPosts {
-		wg.Add(1)
-		go func(groupID string, messageIDs []string) {
-			getURL := "https://api.groupme.com/v3/groups/" + groupID + "/likes?period=day&token=" + token
-			resp, _ := http.Get(getURL)
-			body, _ := ioutil.ReadAll(resp.Body)
-
-			var wrapper gmMessageWrapper
-			json.Unmarshal(body, &wrapper)
-
-			for _, message := range wrapper.Response.Messages {
-				for _, id := range messageIDs {
-					if id == message.MessageID() {
-						out <- len(message.FavoritedBy)
-					}
-				}
-			}
-			wg.Done()
-		}(key, ids)
-	}
-
-	go func() {
-		wg.Wait()
-		close(out)
-	}()
-
-	likes := 0
-	for result := range out {
-		likes += result
-	}
-
-	return likes
+	return likeCount
 }
 
 func cachePost(cacheID int, messageID, groupID string) {
@@ -77,40 +36,68 @@ type GroupmePost struct {
 	GroupID   string `sql:"group_id"`
 }
 
+func updateLikes() {
+	queryStr := fmt.Sprintf("SELECT %s FROM groupme_posts WHERE posted_at >= NOW() - '1 day'::INTERVAL", sqlstruct.Columns(GroupmePost{}))
+
+	rows, err := currentDB.Query(queryStr)
+	if err != nil {
+		return
+	}
+	defer rows.Close()
+
+	groupedPosts := make(map[string][]GroupmePost)
+	for rows.Next() {
+		var post GroupmePost
+		err := sqlstruct.Scan(&post, rows)
+		if err == nil {
+			slice := groupedPosts[post.GroupID]
+			slice = append(slice, post)
+			groupedPosts[post.GroupID] = slice
+		}
+	}
+
+	token := os.Getenv("groupMeID")
+
+	updated := make(map[int]int)
+
+	for key, group := range groupedPosts {
+		getURL := "https://api.groupme.com/v3/groups/" + key + "/likes?period=day&token=" + token
+		resp, _ := http.Get(getURL)
+		body, _ := ioutil.ReadAll(resp.Body)
+
+		var wrapper gmMessageWrapper
+		json.Unmarshal(body, &wrapper)
+
+		for _, message := range wrapper.Response.Messages {
+			for _, post := range group {
+				if post.MessageID == message.MessageID() {
+					updated[post.ID] = len(message.FavoritedBy)
+				}
+			}
+		}
+	}
+
+	tx, err := currentDB.Begin()
+	if err != nil {
+		return
+	}
+
+	stmt, _ := currentDB.Prepare("UPDATE groupme_posts SET likes=$1 WHERE id=$2")
+	for updateID, likeCount := range updated {
+		stmt.Exec(likeCount, updateID)
+	}
+	tx.Commit()
+}
+
 //Temp DB
 var currentDB *sql.DB
 
 func init() {
-	currentDB = connect()
-}
-
-func connect() *sql.DB {
 	dbUrl := os.Getenv("DATABASE_URL")
 	database, err := sql.Open("postgres", dbUrl)
 	if err != nil {
 		log.Fatalf("[x] Could not open the connection to the database. Reason: %s", err.Error())
 	}
-	return database
-}
 
-func postFetch(whereStr string, values []interface{}) ([]GroupmePost, error) {
-
-	queryStr := fmt.Sprintf("SELECT %s FROM groupme_posts", sqlstruct.Columns(GroupmePost{}))
-
-	rows, err := currentDB.Query(queryStr+" "+whereStr, values...)
-	if err != nil {
-		return []GroupmePost{}, err
-	}
-	defer rows.Close()
-
-	actions := []GroupmePost{}
-	for rows.Next() {
-		var act GroupmePost
-		err := sqlstruct.Scan(&act, rows)
-		if err == nil {
-			actions = append(actions, act)
-		}
-	}
-
-	return actions, nil
+	currentDB = database
 }

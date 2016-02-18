@@ -47,6 +47,8 @@ func (g gmService) PostText(key, text string, cacheID int, groupMessage service.
 			}
 		}(key, subText)
 	}
+
+	go updateLikes()
 }
 
 type gmMessageWrapper struct {

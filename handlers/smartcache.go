@@ -74,10 +74,15 @@ func (s SmartCache) CachedResponse(message string) *string {
 }
 
 func (s SmartCache) CacheQuery(query, result string) int {
-	queryStr := "INSERT INTO cached(query, result) VALUES($1, $2) RETURNING id"
-	row := currentDB.QueryRow(queryStr, query, result)
+	row := currentDB.QueryRow("SELECT id FROM cached WHERE query=$1 AND result=$2", query, result)
 
 	var id int
+	err := row.Scan(&id)
+	if err != nil {
+		return id
+	}
+
+	row = currentDB.QueryRow("INSERT INTO cached(query, result) VALUES($1, $2) RETURNING id", query, result)
 	row.Scan(&id)
 
 	return id
