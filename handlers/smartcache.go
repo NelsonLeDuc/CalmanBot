@@ -32,8 +32,13 @@ func (s SmartCache) CachedResponse(message string) *string {
 		return nil
 	}
 
-	first := cached[0]
-	s.monitor.ValueFor(first.ID)
+	itemValues := make([]int, 0)
+	for _, item := range cached {
+		value := s.monitor.ValueFor(item.ID)
+		itemValues = append(itemValues, value)
+	}
+
+	fmt.Println(itemValues)
 
 	return nil
 }

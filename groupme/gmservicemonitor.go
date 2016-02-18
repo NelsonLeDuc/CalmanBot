@@ -61,9 +61,6 @@ func (g GroupmeMonitor) ValueFor(cachedID int) int {
 		likes += result
 	}
 
-	fmt.Print("LIKES - ")
-	fmt.Println(likes)
-
 	return likes
 }
 
