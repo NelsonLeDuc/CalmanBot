@@ -89,9 +89,6 @@ func (s SmartCache) CacheQuery(query, result string) int {
 func cacheFetch(whereStr string, values []interface{}) ([]Cached, error) {
 
 	queryStr := fmt.Sprintf("SELECT %s FROM cached", sqlstruct.Columns(Cached{}))
-
-	fmt.Println(queryStr)
-
 	rows, err := config.DB.Query(queryStr+" "+whereStr, values...)
 	if err != nil {
 		return []Cached{}, err
