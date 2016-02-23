@@ -11,13 +11,13 @@ import (
 	"sort"
 	"strings"
 
-	_ "github.com/nelsonleduc/calmanbot/groupme"
+	"github.com/nelsonleduc/calmanbot/cache"
 	"github.com/nelsonleduc/calmanbot/handlers/models"
 	"github.com/nelsonleduc/calmanbot/service"
 	"github.com/nelsonleduc/calmanbot/utility"
 )
 
-func HandleCalman(message service.Message, service service.Service, cache SmartCache) {
+func HandleCalman(message service.Message, service service.Service, cache cache.QueryCache) {
 
 	if message.UserType() != "user" {
 		return

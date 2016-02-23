@@ -1,13 +1,11 @@
-package handlers
+package cache
 
 import (
-	"database/sql"
 	"fmt"
-	"log"
 	"math/rand"
-	"os"
 
 	"github.com/kisielk/sqlstruct"
+	"github.com/nelsonleduc/calmanbot/config"
 	"github.com/nelsonleduc/calmanbot/service"
 )
 
@@ -74,7 +72,7 @@ func (s SmartCache) CachedResponse(message string) *string {
 }
 
 func (s SmartCache) CacheQuery(query, result string) int {
-	row := currentDB.QueryRow("SELECT id FROM cached WHERE query=$1 AND result=$2", query, result)
+	row := config.DB.QueryRow("SELECT id FROM cached WHERE query=$1 AND result=$2", query, result)
 
 	var id int
 	err := row.Scan(&id)
@@ -82,26 +80,10 @@ func (s SmartCache) CacheQuery(query, result string) int {
 		return id
 	}
 
-	row = currentDB.QueryRow("INSERT INTO cached(query, result) VALUES($1, $2) RETURNING id", query, result)
+	row = config.DB.QueryRow("INSERT INTO cached(query, result) VALUES($1, $2) RETURNING id", query, result)
 	row.Scan(&id)
 
 	return id
-}
-
-//Temp DB
-var currentDB *sql.DB
-
-func init() {
-	currentDB = connect()
-}
-
-func connect() *sql.DB {
-	dbUrl := os.Getenv("DATABASE_URL")
-	database, err := sql.Open("postgres", dbUrl)
-	if err != nil {
-		log.Fatalf("[x] Could not open the connection to the database. Reason: %s", err.Error())
-	}
-	return database
 }
 
 func cacheFetch(whereStr string, values []interface{}) ([]Cached, error) {
@@ -110,7 +92,7 @@ func cacheFetch(whereStr string, values []interface{}) ([]Cached, error) {
 
 	fmt.Println(queryStr)
 
-	rows, err := currentDB.Query(queryStr+" "+whereStr, values...)
+	rows, err := config.DB.Query(queryStr+" "+whereStr, values...)
 	if err != nil {
 		return []Cached{}, err
 	}
