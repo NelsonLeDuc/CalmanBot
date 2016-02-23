@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/kisielk/sqlstruct"
-	_ "github.com/lib/pq"
 	"github.com/nelsonleduc/calmanbot/config"
 )
 
