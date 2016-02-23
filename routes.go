@@ -23,12 +23,6 @@ var routes = Routes{
 		handlers.HandleBotHook,
 	},
 	Route{
-		"ActionsRespond",
-		"GET",
-		"/actions",
-		handlers.HandleActions,
-	},
-	Route{
 		"GoogleImage",
 		"GET",
 		"/animated",
