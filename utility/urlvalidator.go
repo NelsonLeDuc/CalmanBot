@@ -7,7 +7,7 @@ import (
 
 func ValidateURL(u string, isImage bool) bool {
 
-	if isValidHTTPURLString(u) {
+	if IsValidHTTPURLString(u) {
 
 		resp, err := http.Get(u)
 		defer resp.Body.Close()
@@ -26,7 +26,7 @@ func ValidateURL(u string, isImage bool) bool {
 	return true
 }
 
-func isValidHTTPURLString(s string) bool {
+func IsValidHTTPURLString(s string) bool {
 	URL, _ := url.Parse(s)
 	return (URL.Scheme == "http" || URL.Scheme == "https")
 }

@@ -11,6 +11,8 @@ import (
 	"os"
 	"strconv"
 	"sync"
+
+	"github.com/nelsonleduc/calmanbot/utility"
 )
 
 type RootSearch struct {
@@ -120,7 +122,7 @@ func googleQuery(url string) *RootSearch {
 
 func isValidGIF(url string) bool {
 
-	if !isValidHTTPURLString(url) {
+	if !utility.IsValidHTTPURLString(url) {
 		return false
 	}
 
@@ -139,9 +141,4 @@ func isValidGIF(url string) bool {
 	}
 
 	return len(decode.Image) > 1
-}
-
-func isValidHTTPURLString(s string) bool {
-	URL, _ := url.Parse(s)
-	return (URL.Scheme == "http" || URL.Scheme == "https")
 }
