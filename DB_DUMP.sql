@@ -151,7 +151,8 @@ CREATE TABLE groupme_posts (
     cache_id integer,
     likes integer DEFAULT 0,
     message_id character varying,
-    group_id character varying
+    group_id character varying,
+    posted_at timestamp without time zone DEFAULT now()
 );
 
 
@@ -205,18 +206,17 @@ ALTER TABLE ONLY groupme_posts ALTER COLUMN id SET DEFAULT nextval('groupme_post
 
 COPY actions (id, type, content, data_path, pattern, main, priority, fallback_action, post_text) FROM stdin;
 11	TEXT	Lol 12	\N	\N	f	100	\N	\N
+10	URL/IMAGE	http://calmanbot-staging.herokuapp.com/animated?q={_text_}	{_randomInt_}	[@]{_botname_} (.*)	f	100	11	\N
+5	URL/TEXT	http://jsoncat.parseapp.com/numMessages?groupID={groupID}	messageCount	[&]{_botname_} (num$|number$)	t	1	\N	\N
 8	URL/IMAGE	http://www.reddit.com/r/calmangonewild/.json	data.children.{_randomInt_}.data.url	[@]{_botname_} (c(al|law)man)	t	1	12	\N
 7	TEXT	Do I look like a map?	\N	[@]{_botname_} (where (is|am|are|be))	t	0	\N	\N
+13	URL/TEXT	https://www.googleapis.com/youtube/v3/search?key={_key(yt)_}&part=snippet&type=video&q={_text_}	items.{_randomInt_}.id.videoId	[@]{_botname_} youtube (.*)	t	3	11	https://www.youtube.com/watch?v={_text_}
+14	URL/TEXT	https://www.googleapis.com/youtube/v3/search?key={_key(yt)_}&part=snippet&maxResults=1&type=video&q={_text_}	items.{_randomInt_}.id.videoId	[@]{_botname_} \\$youtube (.*)	t	4	11	https://www.youtube.com/watch?v={_text_}
 12	URL/IMAGE	http://api.giphy.com/v1/gifs/search?q={_text_}&api_key=dc6zaTOxFJmzC&limit=40	data.{_randomInt_}.images.original.url	[@]{_botname_} (.*)	t	20	10	\N
 2	TEXT	http://crossfitsouthcobb.com/wp-content/uploads/2014/10/cookie_monster_original.jpg	\N	[&]{_botname_} (coo+kies*)	t	0	\N	\N
 1	URL/TEXT	http://www.quandl.com/api/v1/datasets/CHRIS/CME_BZ1.json	data.0.6	[&]{_botname_} (oil)	t	2	\N	\N
 9	URL/TEXT	http://utdeats.com/university-eats/json/dining.php?id=1&type=off	Off.{_randomInt_}.Name	[@]{_botname_} (where should we eat\\?|foods\\?)	t	2	12	\N
-13	URL/TEXT	https://www.googleapis.com/youtube/v3/search?key={_key(yt)_}&part=snippet&type=video&q={_text_}	items.{_randomInt_}.id.videoId	[@]{_botname_} youtube (.*)	t	3	15	https://www.youtube.com/watch?v={_text_}
-14	URL/TEXT	https://www.googleapis.com/youtube/v3/search?key={_key(yt)_}&part=snippet&maxResults=1&type=video&q={_text_}	items.{_randomInt_}.id.videoId	[@]{_botname_} \\$youtube (.*)	t	4	15	https://www.youtube.com/watch?v={_text_}
-10	URL/IMAGE	http://calmanbot-production.herokuapp.com/animated?q={_text_}	{_randomInt_}	[@]{_botname_} (.*)	f	100	15	\N
-15	URL/TEXT	https://www.reddit.com/r/copypasta/top.json?sort=top&t=all&limit=100	data.children.{_randomInt_}.data.selftext	\N	f	100	11	\N
-3	URL/IMAGE	http://ajax.googleapis.com/ajax/services/search/images?v=1.0&as_filetype=png&rsz=8&q={_text_}	responseData.results.{_randomInt_}.url	[@]{_botname_} im(?:(?:age)|g) (.*)	f	18	15	\N
-5	URL/TEXT	http://jsoncat.parseapp.com/numMessages?groupID={groupID}	messageCount	[&]{_botname_} (num$|number$)	f	1	\N	\N
+3	URL/IMAGE	http://ajax.googleapis.com/ajax/services/search/images?v=1.0&as_filetype=png&rsz=8&q={_text_}	responseData.results.{_randomInt_}.url	[@]{_botname_} im(?:(?:age)|g) (.*)	t	18	11	\N
 \.
 
 
@@ -224,7 +224,7 @@ COPY actions (id, type, content, data_path, pattern, main, priority, fallback_ac
 -- Name: actions_id_seq; Type: SEQUENCE SET; Schema: public; Owner: nelsonleduc
 --
 
-SELECT pg_catalog.setval('actions_id_seq', 15, true);
+SELECT pg_catalog.setval('actions_id_seq', 14, true);
 
 
 --
@@ -254,14 +254,14 @@ COPY cached (id, query, result) FROM stdin;
 -- Name: cached_id_seq; Type: SEQUENCE SET; Schema: public; Owner: nelsonleduc
 --
 
-SELECT pg_catalog.setval('cached_id_seq', 17, true);
+SELECT pg_catalog.setval('cached_id_seq', 47, true);
 
 
 --
 -- Data for Name: groupme_posts; Type: TABLE DATA; Schema: public; Owner: nelsonleduc
 --
 
-COPY groupme_posts (id, cache_id, likes, message_id, group_id) FROM stdin;
+COPY groupme_posts (id, cache_id, likes, message_id, group_id, posted_at) FROM stdin;
 \.
 
 
@@ -269,7 +269,7 @@ COPY groupme_posts (id, cache_id, likes, message_id, group_id) FROM stdin;
 -- Name: groupme_posts_id_seq; Type: SEQUENCE SET; Schema: public; Owner: nelsonleduc
 --
 
-SELECT pg_catalog.setval('groupme_posts_id_seq', 18, true);
+SELECT pg_catalog.setval('groupme_posts_id_seq', 40, true);
 
 
 --
