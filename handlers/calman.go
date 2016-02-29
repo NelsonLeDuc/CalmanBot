@@ -50,7 +50,8 @@ func HandleCalman(message service.Message, service service.Service, cache cache.
 
 	fmt.Printf("Query: %v\n", message.Text())
 	if postString != "" {
-		fmt.Printf("Action: %v - Posting: %v\n", act.Content, postString)
+		fmt.Printf("Action: %v\n", act.Content)
+		fmt.Printf("Posting: %v\n", postString)
 		service.PostText(bot.Key, postString, cacheID, message)
 	}
 }
