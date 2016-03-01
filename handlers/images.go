@@ -56,7 +56,14 @@ func HandleGoogleImage(w http.ResponseWriter, r *http.Request) {
 		validFromRoot := validLinksFromRoot(*root)
 		validLinks = append(validLinks, validFromRoot...)
 
-		url = googleURL + "&start=" + strconv.Itoa(root.Queries.NextPage[0].StartIndex)
+		var startIndex int
+		if len(root.Queries.NextPage) > 0 {
+			startIndex = root.Queries.NextPage[0].StartIndex
+		} else {
+			break
+		}
+
+		url = googleURL + "&start=" + strconv.Itoa(startIndex)
 		counter++
 	}
 
