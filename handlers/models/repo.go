@@ -1,35 +1,17 @@
 package models
 
 import (
-	"database/sql"
 	"fmt"
-	"log"
-	"os"
 
 	"github.com/kisielk/sqlstruct"
-	_ "github.com/lib/pq"
+	"github.com/nelsonleduc/calmanbot/config"
 )
-
-var currentDB *sql.DB
-
-func init() {
-	currentDB = connect()
-}
-
-func connect() *sql.DB {
-	dbUrl := os.Getenv("DATABASE_URL")
-	database, err := sql.Open("postgres", dbUrl)
-	if err != nil {
-		log.Fatalf("[x] Could not open the connection to the database. Reason: %s", err.Error())
-	}
-	return database
-}
 
 func actionFetch(whereStr string, values []interface{}) ([]Action, error) {
 
 	queryStr := fmt.Sprintf("SELECT %s FROM actions", sqlstruct.Columns(Action{}))
 
-	rows, err := currentDB.Query(queryStr+" "+whereStr, values...)
+	rows, err := config.DB.Query(queryStr+" "+whereStr, values...)
 	if err != nil {
 		return []Action{}, err
 	}
@@ -49,7 +31,7 @@ func actionFetch(whereStr string, values []interface{}) ([]Action, error) {
 
 //Public Methods
 func FetchBot(id string) (Bot, error) {
-	rows, err := currentDB.Query(fmt.Sprintf("SELECT %s FROM bots WHERE group_id = $1", sqlstruct.Columns(Bot{})), id)
+	rows, err := config.DB.Query(fmt.Sprintf("SELECT %s FROM bots WHERE group_id = $1", sqlstruct.Columns(Bot{})), id)
 	if err != nil {
 		return Bot{}, err
 	}

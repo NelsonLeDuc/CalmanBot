@@ -11,6 +11,8 @@ import (
 	"os"
 	"strconv"
 	"sync"
+
+	"github.com/nelsonleduc/calmanbot/utility"
 )
 
 type RootSearch struct {
@@ -54,7 +56,14 @@ func HandleGoogleImage(w http.ResponseWriter, r *http.Request) {
 		validFromRoot := validLinksFromRoot(*root)
 		validLinks = append(validLinks, validFromRoot...)
 
-		url = googleURL + "&start=" + strconv.Itoa(root.Queries.NextPage[0].StartIndex)
+		var startIndex int
+		if len(root.Queries.NextPage) > 0 {
+			startIndex = root.Queries.NextPage[0].StartIndex
+		} else {
+			break
+		}
+
+		url = googleURL + "&start=" + strconv.Itoa(startIndex)
 		counter++
 	}
 
@@ -120,7 +129,7 @@ func googleQuery(url string) *RootSearch {
 
 func isValidGIF(url string) bool {
 
-	if !isValidHTTPURLString(url) {
+	if !utility.IsValidHTTPURLString(url) {
 		return false
 	}
 
@@ -139,9 +148,4 @@ func isValidGIF(url string) bool {
 	}
 
 	return len(decode.Image) > 1
-}
-
-func isValidHTTPURLString(s string) bool {
-	URL, _ := url.Parse(s)
-	return (URL.Scheme == "http" || URL.Scheme == "https")
 }

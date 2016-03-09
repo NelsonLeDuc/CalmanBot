@@ -11,13 +11,13 @@ import (
 	"sort"
 	"strings"
 
-	_ "github.com/nelsonleduc/calmanbot/groupme"
+	"github.com/nelsonleduc/calmanbot/cache"
 	"github.com/nelsonleduc/calmanbot/handlers/models"
 	"github.com/nelsonleduc/calmanbot/service"
 	"github.com/nelsonleduc/calmanbot/utility"
 )
 
-func HandleCalman(message service.Message, service service.Service) {
+func HandleCalman(message service.Message, service service.Service, cache cache.QueryCache) {
 
 	if message.UserType() != "user" {
 		return
@@ -25,12 +25,38 @@ func HandleCalman(message service.Message, service service.Service) {
 
 	bot, _ := models.FetchBot(message.GroupID())
 
+	// Make sure the message has the bot's name with a preceeding character, and that it isn't escaped
 	index := strings.Index(strings.ToLower(message.Text()), strings.ToLower(bot.BotName))
 	isEscaped := (index >= 2 && message.Text()[index-2] == '\\')
 	if len(message.Text()) < 1 || index < 1 || isEscaped {
 		return
 	}
 
+	var (
+		postString string
+		act        models.Action
+	)
+
+	if cached := cache.CachedResponse(message.Text()); cached != nil {
+		postString = *cached
+	} else {
+		postString, act = responseForMessage(message, bot)
+	}
+
+	postString = updatedPostText(act, postString)
+	postString = utility.ProcessedString(postString)
+
+	cacheID := cache.CacheQuery(message.Text(), postString)
+
+	fmt.Printf("Query: %v\n", message.Text())
+	if postString != "" {
+		fmt.Printf("Action: %v\n", act.Content)
+		fmt.Printf("Posting: %v\n", postString)
+		service.PostText(bot.Key, postString, cacheID, message)
+	}
+}
+
+func responseForMessage(message service.Message, bot models.Bot) (string, models.Action) {
 	actions, _ := models.FetchActions(true)
 	sort.Sort(models.ByPriority(actions))
 
@@ -68,14 +94,7 @@ func HandleCalman(message service.Message, service service.Service) {
 		}
 	}
 
-	postString = updatedPostText(act, postString)
-	postString = utility.ProcessedString(postString)
-
-	if postString != "" {
-		fmt.Printf("Action: %v\n", act.Content)
-		fmt.Printf("Posting: %v\n", postString)
-		service.PostText(bot.Key, postString)
-	}
+	return postString, act
 }
 
 func handleURLAction(a models.Action, b models.Bot) (string, error) {
