@@ -14,11 +14,12 @@ func init() {
 	groupmeService = *service.NewService("groupme")
 }
 
-func HandleBotHook(w http.ResponseWriter, r *http.Request) {
+func BotHook(calman func(service.Message, service.Service, cache.QueryCache)) func(http.ResponseWriter, *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		message := groupmeService.MessageFromJSON(r.Body)
+		monitor, _ := groupmeService.ServiceMonitor()
+		cache := cache.NewSmartCache(monitor)
 
-	message := groupmeService.MessageFromJSON(r.Body)
-	monitor, _ := groupmeService.ServiceMonitor()
-	cache := cache.NewSmartCache(monitor)
-
-	HandleCalman(message, groupmeService, cache)
+		calman(message, groupmeService, cache)
+	}
 }

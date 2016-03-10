@@ -20,7 +20,7 @@ var routes = Routes{
 		"CalmanRespond",
 		"POST",
 		"/bots/botHook",
-		handlers.HandleBotHook,
+		handlers.BotHook(handlers.HandleCalman),
 	},
 	Route{
 		"GoogleImage",
