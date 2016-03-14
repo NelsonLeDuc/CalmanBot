@@ -42,7 +42,7 @@ func HandleGoogleImage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	googleURL := "https://www.googleapis.com/customsearch/v1?key=" + os.Getenv("gis_key") + "&alt=json&searchType=image&fileType=gif&num=10&q=" + url.QueryEscape(query)
+	googleURL := "https://www.googleapis.com/customsearch/v1?key=" + os.Getenv("gis_key") + "&alt=json&searchType=image&fileType=gif&safe=medium&num=10&q=" + url.QueryEscape(query)
 	validLinks := []string{}
 
 	url := googleURL
