@@ -47,6 +47,7 @@ func (p imgurProcessor) CanProcess(str string) bool {
 
 func (p imgurProcessor) Process(str string) string {
 	URL, _ := url.Parse(str)
+	URL.Scheme = "https"
 	URL.Path += "v"
 
 	return URL.String()
