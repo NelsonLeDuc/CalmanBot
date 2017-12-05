@@ -9,6 +9,7 @@ import (
 	"os"
 	"regexp"
 	"sort"
+	"strconv"
 	"strings"
 
 	"github.com/nelsonleduc/calmanbot/cache"
@@ -37,10 +38,8 @@ func HandleCalman(message service.Message, service service.Service, cache cache.
 		act        models.Action
 	)
 
-	helpRegex, _ := regexp.Compile("(?i)&" + bot.BotName + " (help)")
-	helpMatched := helpRegex.FindStringSubmatch(message.Text())
-	if len(helpMatched) > 1 && helpMatched[1] != "" {
-		postString = responseForHelp(bot)
+	if handled, result := processBuiltins(message, bot, cache); handled {
+		postString = result
 	} else {
 		if cached := cache.CachedResponse(message.Text()); cached != nil {
 			postString = *cached
@@ -62,7 +61,66 @@ func HandleCalman(message service.Message, service service.Service, cache cache.
 	}
 }
 
-func responseForHelp(bot models.Bot) string {
+type builtinDescription struct {
+	trigger     string
+	description string
+}
+
+type builtin struct {
+	builtinDescription
+	handler func(models.Bot, cache.QueryCache) string
+}
+
+// Help
+var helpDescription = builtinDescription{
+	"(help)",
+	"See this",
+}
+
+// Leaderboard
+var leaderboardDescription = builtinDescription{
+	"(leaderboard)",
+	"List top 5 liked posts",
+}
+
+var descriptions = []builtinDescription{
+	helpDescription,
+	leaderboardDescription,
+}
+var builtins = []builtin{
+	builtin{
+		helpDescription,
+		responseForHelp,
+	},
+	builtin{
+		leaderboardDescription,
+		responseForLeaderboard,
+	},
+}
+
+func processBuiltins(message service.Message, bot models.Bot, cache cache.QueryCache) (bool, string) {
+	for _, b := range builtins {
+		reg, _ := regexp.Compile("(?i)&" + bot.BotName + " " + b.trigger)
+		matched := reg.FindStringSubmatch(message.Text())
+		if len(matched) > 1 && matched[1] != "" {
+			return true, b.handler(bot, cache)
+		}
+	}
+
+	return false, ""
+}
+
+func responseForLeaderboard(bot models.Bot, cache cache.QueryCache) string {
+	entries := cache.LeaderboardEntries(bot.GroupID, 5)
+	leaderboardAccumulatr := "Top posts:"
+	for _, e := range entries {
+		leaderboardAccumulatr += "\n" + strconv.Itoa(e.LikeCount) + "    " + e.Query
+	}
+
+	return leaderboardAccumulatr
+}
+
+func responseForHelp(bot models.Bot, cache cache.QueryCache) string {
 	actions, _ := models.FetchActions(true)
 	sort.Sort(models.ByPriority(actions))
 
@@ -75,6 +133,12 @@ func responseForHelp(bot models.Bot) string {
 
 		if len(*a.Pattern) > longest {
 			longest = len(*a.Pattern)
+		}
+	}
+	for _, b := range descriptions {
+		length := len("&" + bot.BotName + " " + b.trigger)
+		if length > longest {
+			longest = length
 		}
 	}
 	paddingFmt := fmt.Sprintf("%%-%ds", longest+2)
@@ -94,6 +158,10 @@ func responseForHelp(bot models.Bot) string {
 		printablePattern = re.ReplaceAllLiteralString(printablePattern, thing)
 
 		helpAccumulator += "\n" + fmt.Sprintf(paddingFmt, "\""+printablePattern+"\"") + "\n\t" + *a.Description
+	}
+	for _, b := range descriptions {
+		printablePattern := "&" + bot.BotName + " " + b.trigger
+		helpAccumulator += "\n" + fmt.Sprintf(paddingFmt, "\""+printablePattern+"\"") + "\n\t" + b.description
 	}
 
 	return helpAccumulator

@@ -86,6 +86,37 @@ func (s SmartCache) CacheQuery(query, result string) int {
 	return id
 }
 
+func (s SmartCache) LeaderboardEntries(groupID string, count int) []LeaderboardEntry {
+	posts, err := topPosts(groupID, count)
+	if err != nil {
+		return []LeaderboardEntry{}
+	}
+
+	return posts
+}
+
+func topPosts(id string, limit int) ([]LeaderboardEntry, error) {
+	rows, err := config.DB.Query("SELECT cached.query, groupme_posts.likes FROM cached INNER JOIN groupme_posts ON cached.id=groupme_posts.cache_id WHERE groupme_posts.group_id = $1 ORDER BY groupme_posts.likes DESC LIMIT $2", id, limit)
+	if err != nil {
+		return []LeaderboardEntry{}, err
+	}
+	defer rows.Close()
+
+	actions := []LeaderboardEntry{}
+	for rows.Next() {
+		var (
+			likeCount int
+			query     string
+		)
+		err := rows.Scan(&query, &likeCount)
+		if err == nil {
+			actions = append(actions, LeaderboardEntry{likeCount, query})
+		}
+	}
+
+	return actions, nil
+}
+
 func cacheFetch(whereStr string, values []interface{}) ([]Cached, error) {
 
 	queryStr := fmt.Sprintf("SELECT %s FROM cached", sqlstruct.Columns(Cached{}))
