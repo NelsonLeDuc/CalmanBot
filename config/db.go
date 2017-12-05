@@ -28,6 +28,7 @@ func DB() *sql.DB {
 	stats := db.Stats()
 	if stats.OpenConnections >= 20 {
 		db.Close()
+		log.Println("Database has too many connections, closing and reopening")
 		openDB()
 	}
 
