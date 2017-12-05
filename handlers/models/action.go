@@ -12,6 +12,7 @@ type Action struct {
 	Priority       int     `sql:"priority"`
 	ID             int     `sql:"id"`
 	PostText       *string `sql:"post_text"`
+	Description    *string `sql:"description"`
 }
 
 func (a Action) IsURLType() bool {
