@@ -96,7 +96,7 @@ func (s SmartCache) LeaderboardEntries(groupID string, count int) []LeaderboardE
 }
 
 func topPosts(id string, limit int) ([]LeaderboardEntry, error) {
-	rows, err := config.DB.Query("SELECT cached.query, groupme_posts.likes FROM cached INNER JOIN groupme_posts ON cached.id=groupme_posts.cache_id WHERE groupme_posts.group_id = $1 ORDER BY groupme_posts.likes DESC LIMIT $2", id, limit)
+	rows, err := config.DB.Query("SELECT cached.query, groupme_posts.likes, cached.result FROM cached INNER JOIN groupme_posts ON cached.id=groupme_posts.cache_id WHERE groupme_posts.group_id = $1 ORDER BY groupme_posts.likes DESC LIMIT $2", id, limit)
 	if err != nil {
 		return []LeaderboardEntry{}, err
 	}
@@ -107,10 +107,11 @@ func topPosts(id string, limit int) ([]LeaderboardEntry, error) {
 		var (
 			likeCount int
 			query     string
+			result    string
 		)
-		err := rows.Scan(&query, &likeCount)
+		err := rows.Scan(&query, &likeCount, &result)
 		if err == nil {
-			actions = append(actions, LeaderboardEntry{likeCount, query})
+			actions = append(actions, LeaderboardEntry{likeCount, query, result})
 		}
 	}
 

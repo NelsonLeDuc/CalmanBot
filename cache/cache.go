@@ -3,6 +3,7 @@ package cache
 type LeaderboardEntry struct {
 	LikeCount int
 	Query     string
+	Result    string
 }
 
 type QueryCache interface {

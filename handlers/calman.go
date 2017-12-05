@@ -68,7 +68,7 @@ type builtinDescription struct {
 
 type builtin struct {
 	builtinDescription
-	handler func(models.Bot, cache.QueryCache) string
+	handler func([]string, models.Bot, cache.QueryCache) string
 }
 
 // Help
@@ -76,16 +76,19 @@ var helpDescription = builtinDescription{
 	"(help)",
 	"See this",
 }
-
-// Leaderboard
-var leaderboardDescription = builtinDescription{
-	"(leaderboard)",
+var topDescription = builtinDescription{
+	"(top)",
 	"List top 5 liked posts",
+}
+var showDescription = builtinDescription{
+	"show ([1-5])",
+	"Repost nth top post",
 }
 
 var descriptions = []builtinDescription{
 	helpDescription,
-	leaderboardDescription,
+	topDescription,
+	showDescription,
 }
 var builtins = []builtin{
 	builtin{
@@ -93,8 +96,12 @@ var builtins = []builtin{
 		responseForHelp,
 	},
 	builtin{
-		leaderboardDescription,
+		topDescription,
 		responseForLeaderboard,
+	},
+	builtin{
+		showDescription,
+		responseForShow,
 	},
 }
 
@@ -103,14 +110,14 @@ func processBuiltins(message service.Message, bot models.Bot, cache cache.QueryC
 		reg, _ := regexp.Compile("(?i)&" + bot.BotName + " " + b.trigger)
 		matched := reg.FindStringSubmatch(message.Text())
 		if len(matched) > 1 && matched[1] != "" {
-			return true, b.handler(bot, cache)
+			return true, b.handler(matched, bot, cache)
 		}
 	}
 
 	return false, ""
 }
 
-func responseForLeaderboard(bot models.Bot, cache cache.QueryCache) string {
+func responseForLeaderboard(matched []string, bot models.Bot, cache cache.QueryCache) string {
 	entries := cache.LeaderboardEntries(bot.GroupID, 5)
 	leaderboardAccumulatr := "Top posts:"
 	for _, e := range entries {
@@ -120,7 +127,18 @@ func responseForLeaderboard(bot models.Bot, cache cache.QueryCache) string {
 	return leaderboardAccumulatr
 }
 
-func responseForHelp(bot models.Bot, cache cache.QueryCache) string {
+func responseForShow(matched []string, bot models.Bot, cache cache.QueryCache) string {
+	entries := cache.LeaderboardEntries(bot.GroupID, 5)
+	num, error := strconv.Atoi(matched[1])
+	num--
+	if len(entries) <= num || error != nil {
+		return "There is nothing to display"
+	}
+
+	return entries[num].Result
+}
+
+func responseForHelp(matched []string, bot models.Bot, cache cache.QueryCache) string {
 	actions, _ := models.FetchActions(true)
 	sort.Sort(models.ByPriority(actions))
 
