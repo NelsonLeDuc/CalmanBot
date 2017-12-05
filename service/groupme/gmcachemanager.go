@@ -21,13 +21,13 @@ type gmPost struct {
 
 func cachePost(cacheID int, messageID, groupID string) {
 	queryStr := "INSERT INTO groupme_posts(cache_id, message_id, group_id) VALUES($1, $2, $3)"
-	config.DB.QueryRow(queryStr, cacheID, messageID, groupID)
+	config.DB().QueryRow(queryStr, cacheID, messageID, groupID)
 }
 
 func updateLikes() {
 	queryStr := fmt.Sprintf("SELECT %s FROM groupme_posts WHERE posted_at >= NOW() - '1 day'::INTERVAL", sqlstruct.Columns(gmPost{}))
 
-	rows, err := config.DB.Query(queryStr)
+	rows, err := config.DB().Query(queryStr)
 	if err != nil {
 		return
 	}
@@ -65,12 +65,12 @@ func updateLikes() {
 		}
 	}
 
-	tx, err := config.DB.Begin()
+	tx, err := config.DB().Begin()
 	if err != nil {
 		return
 	}
 
-	stmt, _ := config.DB.Prepare("UPDATE groupme_posts SET likes=$1 WHERE id=$2")
+	stmt, _ := config.DB().Prepare("UPDATE groupme_posts SET likes=$1 WHERE id=$2")
 	for updateID, likeCount := range updated {
 		stmt.Exec(likeCount, updateID)
 	}

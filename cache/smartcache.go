@@ -72,7 +72,7 @@ func (s SmartCache) CachedResponse(message string) *string {
 }
 
 func (s SmartCache) CacheQuery(query, result string) int {
-	row := config.DB.QueryRow("SELECT id FROM cached WHERE query=$1 AND result=$2", query, result)
+	row := config.DB().QueryRow("SELECT id FROM cached WHERE query=$1 AND result=$2", query, result)
 
 	var id int
 	err := row.Scan(&id)
@@ -80,7 +80,7 @@ func (s SmartCache) CacheQuery(query, result string) int {
 		return id
 	}
 
-	row = config.DB.QueryRow("INSERT INTO cached(query, result) VALUES($1, $2) RETURNING id", query, result)
+	row = config.DB().QueryRow("INSERT INTO cached(query, result) VALUES($1, $2) RETURNING id", query, result)
 	row.Scan(&id)
 
 	return id
@@ -96,7 +96,7 @@ func (s SmartCache) LeaderboardEntries(groupID string, count int) []LeaderboardE
 }
 
 func topPosts(id string, limit int) ([]LeaderboardEntry, error) {
-	rows, err := config.DB.Query("SELECT cached.query, groupme_posts.likes, cached.result FROM cached INNER JOIN groupme_posts ON cached.id=groupme_posts.cache_id WHERE groupme_posts.group_id = $1 ORDER BY groupme_posts.likes DESC LIMIT $2", id, limit)
+	rows, err := config.DB().Query("SELECT cached.query, groupme_posts.likes, cached.result FROM cached INNER JOIN groupme_posts ON cached.id=groupme_posts.cache_id WHERE groupme_posts.group_id = $1 ORDER BY groupme_posts.likes DESC LIMIT $2", id, limit)
 	if err != nil {
 		return []LeaderboardEntry{}, err
 	}
@@ -121,7 +121,7 @@ func topPosts(id string, limit int) ([]LeaderboardEntry, error) {
 func cacheFetch(whereStr string, values []interface{}) ([]Cached, error) {
 
 	queryStr := fmt.Sprintf("SELECT %s FROM cached", sqlstruct.Columns(Cached{}))
-	rows, err := config.DB.Query(queryStr+" "+whereStr, values...)
+	rows, err := config.DB().Query(queryStr+" "+whereStr, values...)
 	if err != nil {
 		return []Cached{}, err
 	}
