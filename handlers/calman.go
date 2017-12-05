@@ -37,14 +37,20 @@ func HandleCalman(message service.Message, service service.Service, cache cache.
 		act        models.Action
 	)
 
-	if cached := cache.CachedResponse(message.Text()); cached != nil {
-		postString = *cached
+	helpRegex, _ := regexp.Compile("(?i)&" + bot.BotName + " (help)")
+	helpMatched := helpRegex.FindStringSubmatch(message.Text())
+	if len(helpMatched) > 1 && helpMatched[1] != "" {
+		postString = responseForHelp(bot)
 	} else {
-		postString, act = responseForMessage(message, bot)
-	}
+		if cached := cache.CachedResponse(message.Text()); cached != nil {
+			postString = *cached
+		} else {
+			postString, act = responseForMessage(message, bot)
+		}
 
-	postString = updatedPostText(act, postString)
-	postString = utility.ProcessedString(postString)
+		postString = updatedPostText(act, postString)
+		postString = utility.ProcessedString(postString)
+	}
 
 	cacheID := cache.CacheQuery(message.Text(), postString)
 
@@ -54,6 +60,43 @@ func HandleCalman(message service.Message, service service.Service, cache cache.
 		fmt.Printf("Posting: %v\n", postString)
 		service.PostText(bot.Key, postString, cacheID, message)
 	}
+}
+
+func responseForHelp(bot models.Bot) string {
+	actions, _ := models.FetchActions(true)
+	sort.Sort(models.ByPriority(actions))
+
+	helpAccumulator := "Commands:"
+	longest := 0
+	for _, a := range actions {
+		if a.Description == nil || a.Pattern == nil {
+			continue
+		}
+
+		if len(*a.Pattern) > longest {
+			longest = len(*a.Pattern)
+		}
+	}
+	paddingFmt := fmt.Sprintf("%%-%ds", longest+2)
+
+	for _, a := range actions {
+		if a.Description == nil || a.Pattern == nil {
+			continue
+		}
+		printablePattern := *a.Pattern
+		printablePattern = strings.Replace(printablePattern, "{_botname_}", bot.BotName, -1)
+		re := regexp.MustCompile("^\\[(.)\\]")
+		matched := re.FindStringSubmatch(printablePattern)
+		thing := ""
+		if len(matched) > 1 && matched[1] != "" {
+			thing = matched[1]
+		}
+		printablePattern = re.ReplaceAllLiteralString(printablePattern, thing)
+
+		helpAccumulator += "\n" + fmt.Sprintf(paddingFmt, "\""+printablePattern+"\"") + "\n\t" + *a.Description
+	}
+
+	return helpAccumulator
 }
 
 func responseForMessage(message service.Message, bot models.Bot) (string, models.Action) {
