@@ -107,7 +107,7 @@ var builtins = []builtin{
 
 func processBuiltins(message service.Message, bot models.Bot, cache cache.QueryCache) (bool, string) {
 	for _, b := range builtins {
-		reg, _ := regexp.Compile("(?i)&" + bot.BotName + " " + b.trigger)
+		reg, _ := regexp.Compile("(?i)&" + bot.BotName + " * " + b.trigger)
 		matched := reg.FindStringSubmatch(message.Text())
 		if len(matched) > 1 && matched[1] != "" {
 			return true, b.handler(matched, bot, cache)
@@ -194,7 +194,7 @@ func responseForMessage(message service.Message, bot models.Bot) (string, models
 		sMatch string
 	)
 	for _, a := range actions {
-		regexString := strings.Replace(*a.Pattern, "{_botname_}", bot.BotName, -1)
+		regexString := strings.Replace(*a.Pattern, "{_botname_}", bot.BotName+" *", -1)
 		r, _ := regexp.Compile("(?i)" + regexString)
 		matched := r.FindStringSubmatch(message.Text())
 		if len(matched) > 1 && matched[1] != "" {
