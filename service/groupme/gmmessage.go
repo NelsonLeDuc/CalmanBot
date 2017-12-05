@@ -1,5 +1,7 @@
 package groupme
 
+import "strings"
+
 type gmMessage struct {
 	GID         string   `json:"group_id"`
 	Name        string   `json:"name"`
@@ -27,7 +29,8 @@ func (m gmMessage) MessageID() string {
 }
 
 func (m gmMessage) Text() string {
-	return m.MessageText
+	filtered := strings.Replace(m.MessageText, "\xC2\xA0", " ", -1)
+	return filtered
 }
 
 func (m gmMessage) UserType() string {
