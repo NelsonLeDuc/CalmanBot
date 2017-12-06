@@ -229,20 +229,19 @@ func responseForMessage(message service.Message, bot models.Bot) (string, models
 func handleURLAction(a models.Action, b models.Bot) (string, error) {
 
 	resp, err := http.Get(a.Content)
-	defer resp.Body.Close()
-
 	if err != nil {
 		return "", err
 	}
+	defer resp.Body.Close()
 
 	content, _ := ioutil.ReadAll(resp.Body)
 	pathString := *a.DataPath
 
-	str := utility.ParseJSON(content, pathString)
+	str := utility.ParseJSON(content, pathString, utility.LinearProvider)
 	for i := 0; i < 3; i++ {
 		if !utility.ValidateURL(str, a.IsImageType()) {
 			fmt.Printf("Invalid URL: %v\n", str)
-			str = utility.ParseJSON(content, pathString)
+			str = utility.ParseJSON(content, pathString, utility.LinearProvider)
 		} else {
 			return str, nil
 		}
