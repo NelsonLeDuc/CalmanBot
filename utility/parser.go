@@ -2,7 +2,6 @@ package utility
 
 import (
 	"encoding/json"
-	"log"
 	"math"
 	"math/rand"
 	"strconv"
@@ -16,7 +15,6 @@ var LinearProvider = func(n int) int {
 	rand.Seed(time.Now().UnixNano())
 	sqrt := 1.0 - math.Sqrt(1.0-rand.Float64())
 	selection := sqrt * float64(n)
-	log.Printf("random: %d", int(selection))
 	return int(selection)
 }
 
