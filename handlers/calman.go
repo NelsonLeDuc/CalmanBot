@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"net/url"
 	"os"
@@ -106,7 +107,9 @@ func responseForMessage(message service.Message, bot models.Bot) (string, models
 		if (err == nil && postString != "") || act.FallbackAction == nil {
 			break
 		} else {
+			log.Printf("Failed: %s", act.Content)
 			act, _ = models.FetchAction(*act.FallbackAction)
+			log.Printf("Fallback to: %s because %v", act.Content, err)
 		}
 	}
 
