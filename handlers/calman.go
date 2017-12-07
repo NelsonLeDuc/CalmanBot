@@ -118,7 +118,15 @@ func responseForMessage(message service.Message, bot models.Bot) (string, models
 
 func handleURLAction(a models.Action, b models.Bot) (string, error) {
 
-	resp, err := http.Get(a.Content)
+	client := &http.Client{}
+	req, err := http.NewRequest("GET", a.Content, nil)
+	if err != nil {
+		return "", err
+	}
+
+	req.Header.Set("User-Agent", "CalmanBot/1.0")
+
+	resp, err := client.Do(req)
 	if err != nil {
 		return "", err
 	}
@@ -126,6 +134,10 @@ func handleURLAction(a models.Action, b models.Bot) (string, error) {
 
 	content, _ := ioutil.ReadAll(resp.Body)
 	pathString := *a.DataPath
+
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		log.Printf("Bad Response: %d length: %d", resp.StatusCode, len(content))
+	}
 
 	str := utility.ParseJSON(content, pathString, utility.LinearProvider)
 	for i := 0; i < 3; i++ {
