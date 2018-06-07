@@ -28,10 +28,10 @@ var helpDescription = builtinDescription{
 }
 var topDescription = builtinDescription{
 	"(top)",
-	"List top 5 liked posts",
+	"List top 10 liked posts",
 }
 var showDescription = builtinDescription{
-	"show ([1-5])",
+	"show ([1-10])",
 	"Repost nth top post",
 }
 
@@ -57,7 +57,7 @@ var builtins = []builtin{
 
 // Handlers
 func responseForLeaderboard(matched []string, bot models.Bot, cache cache.QueryCache) string {
-	entries := cache.LeaderboardEntries(bot.GroupID, 5)
+	entries := cache.LeaderboardEntries(bot.GroupID, 10)
 	leaderboardAccumulatr := "Top posts:"
 	for _, e := range entries {
 		leaderboardAccumulatr += "\n" + strconv.Itoa(e.LikeCount) + "    " + e.Query
@@ -67,7 +67,7 @@ func responseForLeaderboard(matched []string, bot models.Bot, cache cache.QueryC
 }
 
 func responseForShow(matched []string, bot models.Bot, cache cache.QueryCache) string {
-	entries := cache.LeaderboardEntries(bot.GroupID, 5)
+	entries := cache.LeaderboardEntries(bot.GroupID, 10)
 	num, error := strconv.Atoi(matched[1])
 	num--
 	if len(entries) <= num || error != nil {
@@ -80,6 +80,7 @@ func responseForShow(matched []string, bot models.Bot, cache cache.QueryCache) s
 func responseForHelp(matched []string, bot models.Bot, cache cache.QueryCache) string {
 	actions, _ := models.FetchActions(true)
 	sort.Sort(models.ByPriority(actions))
+	botName := bot.SanitizedBotNames()[0]
 
 	helpAccumulator := "Commands:"
 	longest := 0
@@ -93,7 +94,7 @@ func responseForHelp(matched []string, bot models.Bot, cache cache.QueryCache) s
 		}
 	}
 	for _, b := range descriptions {
-		length := len("&" + bot.BotName + " " + b.trigger)
+		length := len("&" + botName + " " + b.trigger)
 		if length > longest {
 			longest = length
 		}
@@ -105,7 +106,7 @@ func responseForHelp(matched []string, bot models.Bot, cache cache.QueryCache) s
 			continue
 		}
 		printablePattern := *a.Pattern
-		printablePattern = strings.Replace(printablePattern, "{_botname_}", bot.BotName, -1)
+		printablePattern = strings.Replace(printablePattern, "{_botname_}", botName, -1)
 		re := regexp.MustCompile("^\\[(.)\\]")
 		matched := re.FindStringSubmatch(printablePattern)
 		thing := ""
@@ -117,7 +118,7 @@ func responseForHelp(matched []string, bot models.Bot, cache cache.QueryCache) s
 		helpAccumulator += "\n" + fmt.Sprintf(paddingFmt, "\""+printablePattern+"\"") + "\n\t" + *a.Description
 	}
 	for _, b := range descriptions {
-		printablePattern := "&" + bot.BotName + " " + b.trigger
+		printablePattern := "&" + botName + " " + b.trigger
 		helpAccumulator += "\n" + fmt.Sprintf(paddingFmt, "\""+printablePattern+"\"") + "\n\t" + b.description
 	}
 
