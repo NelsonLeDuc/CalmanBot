@@ -1,6 +1,8 @@
 package models
 
-import "strings"
+import (
+	"strings"
+)
 
 type Bot struct {
 	GroupName     string `sql:"group_name"`
@@ -11,4 +13,9 @@ type Bot struct {
 
 func (b Bot) BotNames() []string {
 	return strings.Split(b.BotNameString, "<|>")
+}
+
+func (b Bot) SanitizedBotNames() []string {
+	nameStr := strings.Replace(strings.Replace(b.BotNameString, "\\)", ")", -1), "\\(", "(", -1)
+	return strings.Split(nameStr, "<|>")
 }

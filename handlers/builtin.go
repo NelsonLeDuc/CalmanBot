@@ -80,6 +80,7 @@ func responseForShow(matched []string, bot models.Bot, cache cache.QueryCache) s
 func responseForHelp(matched []string, bot models.Bot, cache cache.QueryCache) string {
 	actions, _ := models.FetchActions(true)
 	sort.Sort(models.ByPriority(actions))
+	botName := bot.SanitizedBotNames()[0]
 
 	helpAccumulator := "Commands:"
 	longest := 0
@@ -93,7 +94,7 @@ func responseForHelp(matched []string, bot models.Bot, cache cache.QueryCache) s
 		}
 	}
 	for _, b := range descriptions {
-		length := len("&" + bot.BotNames()[0] + " " + b.trigger)
+		length := len("&" + botName + " " + b.trigger)
 		if length > longest {
 			longest = length
 		}
@@ -105,7 +106,7 @@ func responseForHelp(matched []string, bot models.Bot, cache cache.QueryCache) s
 			continue
 		}
 		printablePattern := *a.Pattern
-		printablePattern = strings.Replace(printablePattern, "{_botname_}", bot.BotNames()[0], -1)
+		printablePattern = strings.Replace(printablePattern, "{_botname_}", botName, -1)
 		re := regexp.MustCompile("^\\[(.)\\]")
 		matched := re.FindStringSubmatch(printablePattern)
 		thing := ""
@@ -117,7 +118,7 @@ func responseForHelp(matched []string, bot models.Bot, cache cache.QueryCache) s
 		helpAccumulator += "\n" + fmt.Sprintf(paddingFmt, "\""+printablePattern+"\"") + "\n\t" + *a.Description
 	}
 	for _, b := range descriptions {
-		printablePattern := "&" + bot.BotNames()[0] + " " + b.trigger
+		printablePattern := "&" + botName + " " + b.trigger
 		helpAccumulator += "\n" + fmt.Sprintf(paddingFmt, "\""+printablePattern+"\"") + "\n\t" + b.description
 	}
 

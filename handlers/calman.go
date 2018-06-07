@@ -28,7 +28,7 @@ func HandleCalman(message service.Message, service service.Service, cache cache.
 
 	// Make sure the message has the bot's name with a preceeding character, and that it isn't escaped
 	index := -1
-	for _, name := range bot.BotNames() {
+	for _, name := range bot.SanitizedBotNames() {
 		nameIndex := strings.Index(strings.ToLower(message.Text()), strings.ToLower(name))
 		if nameIndex != -1 {
 			index = nameIndex
