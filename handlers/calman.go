@@ -27,7 +27,13 @@ func HandleCalman(message service.Message, service service.Service, cache cache.
 	bot, _ := models.FetchBot(message.GroupID())
 
 	// Make sure the message has the bot's name with a preceeding character, and that it isn't escaped
-	index := strings.Index(strings.ToLower(message.Text()), strings.ToLower(bot.BotName))
+	index := -1
+	for _, name := range bot.BotNames() {
+		nameIndex := strings.Index(strings.ToLower(message.Text()), strings.ToLower(name))
+		if nameIndex != -1 {
+			index = nameIndex
+		}
+	}
 	isEscaped := (index >= 2 && message.Text()[index-2] == '\\')
 	if len(message.Text()) < 1 || index < 1 || isEscaped {
 		return
@@ -63,10 +69,12 @@ func HandleCalman(message service.Message, service service.Service, cache cache.
 
 func processBuiltins(message service.Message, bot models.Bot, cache cache.QueryCache) (bool, string) {
 	for _, b := range builtins {
-		reg, _ := regexp.Compile("(?i)&" + bot.BotName + " * " + b.trigger)
-		matched := reg.FindStringSubmatch(message.Text())
-		if len(matched) > 1 && matched[1] != "" {
-			return true, b.handler(matched, bot, cache)
+		for _, name := range bot.BotNames() {
+			reg, _ := regexp.Compile("(?i)&" + name + " * " + b.trigger)
+			matched := reg.FindStringSubmatch(message.Text())
+			if len(matched) > 1 && matched[1] != "" {
+				return true, b.handler(matched, bot, cache)
+			}
 		}
 	}
 
@@ -82,13 +90,15 @@ func responseForMessage(message service.Message, bot models.Bot) (string, models
 		sMatch string
 	)
 	for _, a := range actions {
-		regexString := strings.Replace(*a.Pattern, "{_botname_}", bot.BotName+" *", -1)
-		r, _ := regexp.Compile("(?i)" + regexString)
-		matched := r.FindStringSubmatch(message.Text())
-		if len(matched) > 1 && matched[1] != "" {
-			sMatch = matched[1]
-			act = a
-			break
+		for _, name := range bot.BotNames() {
+			regexString := strings.Replace(*a.Pattern, "{_botname_}", name+" *", -1)
+			r, _ := regexp.Compile("(?i)" + regexString)
+			matched := r.FindStringSubmatch(message.Text())
+			if len(matched) > 1 && matched[1] != "" {
+				sMatch = matched[1]
+				act = a
+				break
+			}
 		}
 	}
 
