@@ -37,6 +37,7 @@ func (g gmService) PostText(key, text string, cacheID int, groupMessage service.
 		dividedText = []string{pasteBinURL}
 	}
 
+	idx := time.Duration(1)
 	for _, subText := range dividedText {
 		go func(key, message string) {
 			postBody := map[string]string{
@@ -49,12 +50,13 @@ func (g gmService) PostText(key, text string, cacheID int, groupMessage service.
 				return
 			}
 
-			postToGroupMe(encoded)
+			postToGroupMe(encoded, idx)
 			mID, err := messageID(groupMessage)
 			if err == nil {
 				cachePost(cacheID, mID, groupMessage.GroupID())
 			}
 		}(key, subText)
+		idx++
 	}
 
 	go updateLikes()
@@ -96,8 +98,8 @@ func postToPastebin(text string) string {
 	return string(respBody)
 }
 
-func postToGroupMe(body []byte) {
-	time.Sleep(postDelayMilliseconds * time.Millisecond)
+func postToGroupMe(body []byte, multiplier time.Duration) {
+	time.Sleep((postDelayMilliseconds * multiplier) * time.Millisecond)
 
 	postURL := "https://api.groupme.com/v3/bots/post"
 	http.Post(postURL, "application/json", bytes.NewReader(body))
