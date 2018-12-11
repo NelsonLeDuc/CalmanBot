@@ -97,10 +97,11 @@ func responseForMessage(message service.Message, bot models.Bot) (string, models
 			if len(matched) > 1 && matched[1] != "" {
 				sMatch = matched[1]
 				act = a
-				break
+				goto Exit
 			}
 		}
 	}
+	Exit:
 
 	var (
 		postString string
