@@ -6,11 +6,13 @@ import (
 	"errors"
 	"io"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"net/url"
 	"os"
 	"time"
 
+	"github.com/nelsonleduc/calmanbot/config"
 	"github.com/nelsonleduc/calmanbot/service"
 	"github.com/nelsonleduc/calmanbot/utility"
 )
@@ -26,6 +28,13 @@ func init() {
 type gmService struct{}
 
 func (g gmService) PostText(key, text string, cacheID int, groupMessage service.Message) {
+
+	if config.Configuration().VerboseMode() {
+		log.Print("***POSTING***")
+		log.Print("key:  " + key)
+		log.Print("text: " + text)
+		log.Print("***DONE***")
+	}
 
 	dividedText := utility.DivideString(text, groupmeLengthLimit)
 	if len(dividedText) > 2 {

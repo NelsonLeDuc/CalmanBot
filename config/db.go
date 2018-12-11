@@ -17,6 +17,10 @@ func init() {
 func openDB() {
 	dbURL := os.Getenv("DATABASE_URL")
 	database, err := sql.Open("postgres", dbURL)
+	if Configuration().VerboseMode() {
+		log.Print(database)
+		log.Print(err)
+	}
 	if err != nil {
 		log.Fatalf("[x] Could not open the connection to the database. Reason: %s", err.Error())
 	}

@@ -1,0 +1,3 @@
+#!/bin/bash
+
+curl -X POST -H "Content-Type: application/json" -d @gm.json localhost:4000/bots/botHook
