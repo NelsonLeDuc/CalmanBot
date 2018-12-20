@@ -31,7 +31,7 @@ var topDescription = builtinDescription{
 	"List top 10 liked posts",
 }
 var showDescription = builtinDescription{
-	"show ([1-10])",
+	"show (10|[1-9])(?:$| )",
 	"Repost nth top post",
 }
 
