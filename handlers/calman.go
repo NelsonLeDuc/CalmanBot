@@ -18,13 +18,13 @@ import (
 	"github.com/nelsonleduc/calmanbot/utility"
 )
 
-func HandleCalman(message service.Message, service service.Service, cache cache.QueryCache) {
+func HandleCalman(message service.Message, service service.Service, cache cache.QueryCache, repo models.Repo) {
 
 	if message.UserType() != "user" {
 		return
 	}
 
-	bot, _ := models.FetchBot(message.GroupID())
+	bot, _ := repo.FetchBot(message.GroupID())
 
 	// Make sure the message has the bot's name with a preceeding character, and that it isn't escaped
 	index := -1
@@ -44,13 +44,13 @@ func HandleCalman(message service.Message, service service.Service, cache cache.
 		act        models.Action
 	)
 
-	if handled, result := processBuiltins(message, bot, cache); handled {
+	if handled, result := processBuiltins(message, bot, cache, repo); handled {
 		postString = result
 	} else {
 		if cached := cache.CachedResponse(message.Text()); cached != nil {
 			postString = *cached
 		} else {
-			postString, act = responseForMessage(message, bot)
+			postString, act = responseForMessage(message, bot, repo)
 		}
 
 		postString = updatedPostText(act, postString)
@@ -67,13 +67,13 @@ func HandleCalman(message service.Message, service service.Service, cache cache.
 	}
 }
 
-func processBuiltins(message service.Message, bot models.Bot, cache cache.QueryCache) (bool, string) {
+func processBuiltins(message service.Message, bot models.Bot, cache cache.QueryCache, repo models.Repo) (bool, string) {
 	for _, b := range builtins {
 		for _, name := range bot.BotNames() {
 			reg, _ := regexp.Compile("(?i)&" + name + " * " + b.trigger)
 			matched := reg.FindStringSubmatch(message.Text())
 			if len(matched) > 1 && matched[1] != "" {
-				return true, b.handler(matched, bot, cache)
+				return true, b.handler(matched, bot, cache, repo)
 			}
 		}
 	}
@@ -81,8 +81,8 @@ func processBuiltins(message service.Message, bot models.Bot, cache cache.QueryC
 	return false, ""
 }
 
-func responseForMessage(message service.Message, bot models.Bot) (string, models.Action) {
-	actions, _ := models.FetchActions(true)
+func responseForMessage(message service.Message, bot models.Bot, repo models.Repo) (string, models.Action) {
+	actions, _ := repo.FetchActions(true)
 	sort.Sort(models.ByPriority(actions))
 
 	var (
@@ -101,7 +101,7 @@ func responseForMessage(message service.Message, bot models.Bot) (string, models
 			}
 		}
 	}
-	Exit:
+Exit:
 
 	var (
 		postString string
@@ -119,7 +119,7 @@ func responseForMessage(message service.Message, bot models.Bot) (string, models
 			break
 		} else {
 			log.Printf("Failed: %s", act.Content)
-			act, _ = models.FetchAction(*act.FallbackAction)
+			act, _ = repo.FetchAction(*act.FallbackAction)
 			log.Printf("Fallback to: %s because %v", act.Content, err)
 		}
 	}

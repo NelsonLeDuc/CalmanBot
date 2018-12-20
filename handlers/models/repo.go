@@ -7,6 +7,12 @@ import (
 	"github.com/nelsonleduc/calmanbot/config"
 )
 
+type Repo interface {
+	FetchBot(id string) (Bot, error)
+	FetchActions(primary bool) ([]Action, error)
+	FetchAction(id int) (Action, error)
+}
+
 func actionFetch(whereStr string, values []interface{}) ([]Action, error) {
 
 	queryStr := fmt.Sprintf("SELECT %s FROM actions", sqlstruct.Columns(Action{}))
@@ -29,8 +35,14 @@ func actionFetch(whereStr string, values []interface{}) ([]Action, error) {
 	return actions, nil
 }
 
+type pgdb struct{}
+
+func PostGresRepo() Repo {
+	return pgdb{}
+}
+
 //Public Methods
-func FetchBot(id string) (Bot, error) {
+func (p pgdb) FetchBot(id string) (Bot, error) {
 	rows, err := config.DB().Query(fmt.Sprintf("SELECT %s FROM bots WHERE group_id = $1", sqlstruct.Columns(Bot{})), id)
 	if err != nil {
 		return Bot{}, err
@@ -44,7 +56,7 @@ func FetchBot(id string) (Bot, error) {
 	return bot, err
 }
 
-func FetchActions(primary bool) ([]Action, error) {
+func (p pgdb) FetchActions(primary bool) ([]Action, error) {
 	var (
 		values   []interface{}
 		queryStr string
@@ -57,7 +69,7 @@ func FetchActions(primary bool) ([]Action, error) {
 	return actionFetch(queryStr, values)
 }
 
-func FetchAction(id int) (Action, error) {
+func (p pgdb) FetchAction(id int) (Action, error) {
 	actions, err := actionFetch("WHERE id = $1", []interface{}{id})
 
 	var action Action

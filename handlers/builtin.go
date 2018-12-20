@@ -18,7 +18,7 @@ type builtinDescription struct {
 
 type builtin struct {
 	builtinDescription
-	handler func([]string, models.Bot, cache.QueryCache) string
+	handler func([]string, models.Bot, cache.QueryCache, models.Repo) string
 }
 
 // Descriptions
@@ -56,7 +56,7 @@ var builtins = []builtin{
 }
 
 // Handlers
-func responseForLeaderboard(matched []string, bot models.Bot, cache cache.QueryCache) string {
+func responseForLeaderboard(matched []string, bot models.Bot, cache cache.QueryCache, repo models.Repo) string {
 	entries := cache.LeaderboardEntries(bot.GroupID, 10)
 	leaderboardAccumulatr := "Top posts:"
 	for _, e := range entries {
@@ -66,7 +66,7 @@ func responseForLeaderboard(matched []string, bot models.Bot, cache cache.QueryC
 	return leaderboardAccumulatr
 }
 
-func responseForShow(matched []string, bot models.Bot, cache cache.QueryCache) string {
+func responseForShow(matched []string, bot models.Bot, cache cache.QueryCache, repo models.Repo) string {
 	entries := cache.LeaderboardEntries(bot.GroupID, 10)
 	num, error := strconv.Atoi(matched[1])
 	num--
@@ -77,8 +77,8 @@ func responseForShow(matched []string, bot models.Bot, cache cache.QueryCache) s
 	return entries[num].Result
 }
 
-func responseForHelp(matched []string, bot models.Bot, cache cache.QueryCache) string {
-	actions, _ := models.FetchActions(true)
+func responseForHelp(matched []string, bot models.Bot, cache cache.QueryCache, repo models.Repo) string {
+	actions, _ := repo.FetchActions(true)
 	sort.Sort(models.ByPriority(actions))
 	botName := bot.SanitizedBotNames()[0]
 
