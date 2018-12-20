@@ -28,4 +28,10 @@ var routes = Routes{
 		"/animated",
 		handlers.HandleGoogleImage,
 	},
+	Route{
+		"JeffSum",
+		"GET",
+		"/jeff",
+		handlers.HandleJeffFetch,
+	},
 }

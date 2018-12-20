@@ -2,9 +2,6 @@
 	"ImportPath": "github.com/nelsonleduc/calmanbot",
 	"GoVersion": "go1.9",
 	"GodepVersion": "v79",
-	"Packages": [
-		"./..."
-	],
 	"Deps": [
 		{
 			"ImportPath": "github.com/gorilla/mux",
@@ -24,6 +21,14 @@
 			"ImportPath": "github.com/lib/pq/oid",
 			"Comment": "go1.0-cutoff-195-g83612a5",
 			"Rev": "83612a56d3dd153a94a629cd64925371c9adad78"
+		},
+		{
+			"ImportPath": "golang.org/x/net/html",
+			"Rev": "a8b9294777976932365dabb6640cf1468d95c70f"
+		},
+		{
+			"ImportPath": "golang.org/x/net/html/atom",
+			"Rev": "a8b9294777976932365dabb6640cf1468d95c70f"
 		}
 	]
 }
