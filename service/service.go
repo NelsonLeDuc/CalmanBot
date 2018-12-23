@@ -2,8 +2,15 @@ package service
 
 import "io"
 
+type PostType int
+
+const (
+	PostTypeText PostType = iota
+	PostTypeImage
+)
+
 type Service interface {
-	PostText(key, text string, cacheID int, groupMessage Message)
+	PostText(key, text string, pType PostType, cacheID int, groupMessage Message)
 	MessageFromJSON(reader io.Reader) Message
 	ServiceMonitor() (Monitor, error)
 }

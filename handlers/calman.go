@@ -61,9 +61,11 @@ func HandleCalman(message service.Message, service service.Service, cache cache.
 
 	fmt.Printf("Query: %v\n", message.Text())
 	if postString != "" {
+		postType := postTypeForAction(act)
 		fmt.Printf("Action: %v\n", act.Content)
+		fmt.Printf("Type: %v\n", postType)
 		fmt.Printf("Posting: %v\n", postString)
-		service.PostText(bot.Key, postString, cacheID, message)
+		service.PostText(bot.Key, postString, postType, cacheID, message)
 	}
 }
 
@@ -189,4 +191,12 @@ func updatedPostText(a models.Action, text string) string {
 	}
 
 	return updated
+}
+
+func postTypeForAction(a models.Action) service.PostType {
+	if a.IsImageType() {
+		return service.PostTypeImage
+	} else {
+		return service.PostTypeText
+	}
 }

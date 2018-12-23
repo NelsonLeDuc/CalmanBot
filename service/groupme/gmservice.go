@@ -27,7 +27,7 @@ func init() {
 
 type gmService struct{}
 
-func (g gmService) PostText(key, text string, cacheID int, groupMessage service.Message) {
+func (g gmService) PostText(key, text string, pType service.PostType, cacheID int, groupMessage service.Message) {
 
 	if config.Configuration().VerboseMode() {
 		log.Print("***POSTING***")

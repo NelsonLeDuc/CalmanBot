@@ -7,12 +7,18 @@ import (
 	"os"
 	"time"
 
+	"github.com/nelsonleduc/calmanbot/config"
+
 	"github.com/gorilla/mux"
 )
 
 func main() {
 	rand.Seed(time.Now().UTC().UnixNano())
 	router := NewRouter()
+
+	if config.Configuration().EnableDiscord() {
+		CreateWebhook()
+	}
 
 	log.Fatal(http.ListenAndServe(GetPort(), router))
 }
