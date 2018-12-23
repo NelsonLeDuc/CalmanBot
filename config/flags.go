@@ -1,6 +1,9 @@
 package config
 
-import "flag"
+import (
+	"flag"
+	"os"
+)
 
 type ProcessConfig interface {
 	VerboseMode() bool
@@ -25,9 +28,9 @@ var config *configHolder
 func Configuration() ProcessConfig {
 	if config == nil {
 		verboseMode := flag.Bool("v", false, "more logging")
-		discord := flag.Bool("d", false, "discord")
 		flag.Parse()
-		config = &configHolder{*verboseMode, *discord}
+		discord := len(os.Getenv("discord_token")) > 0
+		config = &configHolder{*verboseMode, discord}
 	}
 
 	return config
