@@ -21,24 +21,20 @@ const postDelayMilliseconds = 500
 const messagePollDelayMilliseconds = 500
 const groupmeLengthLimit = 1000
 
-func init() {
-	service.AddService("groupme", gmService{})
-}
+type GMService struct{}
 
-type gmService struct{}
-
-func (g gmService) PostText(key, text string, pType service.PostType, cacheID int, groupMessage service.Message) {
+func (g GMService) Post(post service.Post, groupMessage service.Message) { //PostText(key, text string, pType service.PostType, cacheID int, groupMessage service.Message) {
 
 	if config.Configuration().VerboseMode() {
 		log.Print("***POSTING***")
-		log.Print("key:  " + key)
-		log.Print("text: " + text)
+		log.Print("key:  " + post.Key)
+		log.Print("text: " + post.Text)
 		log.Print("***DONE***")
 	}
 
-	dividedText := utility.DivideString(text, groupmeLengthLimit)
+	dividedText := utility.DivideString(post.Text, groupmeLengthLimit)
 	if len(dividedText) > 2 {
-		pasteBinURL := postToPastebin(text)
+		pasteBinURL := postToPastebin(post.Text)
 		if len(pasteBinURL) == 0 {
 			return
 		}
@@ -62,23 +58,23 @@ func (g gmService) PostText(key, text string, pType service.PostType, cacheID in
 			postToGroupMe(encoded, idx)
 			mID, err := messageID(groupMessage)
 			if err == nil {
-				cachePost(cacheID, mID, groupMessage.GroupID())
+				cachePost(post.CacheID, mID, groupMessage.GroupID())
 			}
-		}(key, subText)
+		}(post.Key, subText)
 		idx++
 	}
 
 	go updateLikes()
 }
 
-func (g gmService) MessageFromJSON(reader io.Reader) service.Message {
+func (g GMService) MessageFromJSON(reader io.Reader) service.Message {
 	message := new(gmMessage)
 	json.NewDecoder(reader).Decode(message)
 
 	return *message
 }
 
-func (g gmService) ServiceMonitor() (service.Monitor, error) {
+func (g GMService) ServiceMonitor() (service.Monitor, error) {
 	return GroupmeMonitor{}, nil
 }
 

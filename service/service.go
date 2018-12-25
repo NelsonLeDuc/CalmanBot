@@ -1,7 +1,5 @@
 package service
 
-import "io"
-
 type PostType int
 
 const (
@@ -9,9 +7,15 @@ const (
 	PostTypeImage
 )
 
+type Post struct {
+	Key     string
+	Text    string
+	Type    PostType
+	CacheID int
+}
+
 type Service interface {
-	PostText(key, text string, pType PostType, cacheID int, groupMessage Message)
-	MessageFromJSON(reader io.Reader) Message
+	Post(post Post, groupMessage Message)
 	ServiceMonitor() (Monitor, error)
 }
 
@@ -26,20 +30,4 @@ type Message interface {
 
 type Monitor interface {
 	ValueFor(cachedID int) int
-}
-
-var serviceMap = map[string]Service{}
-
-func NewService(name string) *Service {
-	serv, ok := serviceMap[name]
-
-	if ok {
-		return &serv
-	} else {
-		return nil
-	}
-}
-
-func AddService(name string, serv Service) {
-	serviceMap[name] = serv
 }

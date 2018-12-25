@@ -8,8 +8,6 @@ import (
 	"github.com/nelsonleduc/calmanbot/handlers"
 	"github.com/nelsonleduc/calmanbot/service/discord"
 
-	"github.com/nelsonleduc/calmanbot/service"
-
 	"github.com/bwmarrin/discordgo"
 	"github.com/nelsonleduc/calmanbot/handlers/models"
 )
@@ -22,7 +20,7 @@ var (
 
 func init() {
 	token = os.Getenv("discord_token")
-	discordService = (*service.NewService("discord")).(discord.DSService)
+	discordService = discord.DSService{}
 }
 
 func CreateWebhook() {

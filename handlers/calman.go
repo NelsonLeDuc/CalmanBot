@@ -18,7 +18,7 @@ import (
 	"github.com/nelsonleduc/calmanbot/utility"
 )
 
-func HandleCalman(message service.Message, service service.Service, cache cache.QueryCache, repo models.Repo) {
+func HandleCalman(message service.Message, providedService service.Service, cache cache.QueryCache, repo models.Repo) {
 
 	if message.UserType() != "user" {
 		return
@@ -65,7 +65,7 @@ func HandleCalman(message service.Message, service service.Service, cache cache.
 		fmt.Printf("Action: %v\n", act.Content)
 		fmt.Printf("Type: %v\n", postType)
 		fmt.Printf("Posting: %v\n", postString)
-		service.PostText(bot.Key, postString, postType, cacheID, message)
+		providedService.Post(service.Post{bot.Key, postString, postType, cacheID}, message)
 	}
 }
 

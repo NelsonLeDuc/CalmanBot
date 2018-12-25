@@ -1,8 +1,6 @@
 package discord
 
 import (
-	"io"
-
 	"github.com/bwmarrin/discordgo"
 
 	"github.com/nelsonleduc/calmanbot/service"
@@ -10,25 +8,17 @@ import (
 
 type DSService struct{}
 
-func init() {
-	service.AddService("discord", DSService{})
-}
-
-func (d DSService) PostText(key, text string, pType service.PostType, cacheID int, groupMessage service.Message) {
+func (d DSService) Post(post service.Post, groupMessage service.Message) {
 	discordMessage := groupMessage.(dsMessage)
-	if pType == service.PostTypeText {
-		discordMessage.session.ChannelMessageSend(discordMessage.ChannelID, text)
-	} else if pType == service.PostTypeImage {
+	if post.Type == service.PostTypeText {
+		discordMessage.session.ChannelMessageSend(discordMessage.ChannelID, post.Text)
+	} else if post.Type == service.PostTypeImage {
 		discordMessage.session.ChannelMessageSendEmbed(discordMessage.ChannelID, &discordgo.MessageEmbed{
 			Image: &discordgo.MessageEmbedImage{
-				URL: text,
+				URL: post.Text,
 			},
 		})
 	}
-}
-
-func (d DSService) MessageFromJSON(reader io.Reader) service.Message {
-	return dsMessage{}
 }
 
 func (d DSService) ServiceMonitor() (service.Monitor, error) {
