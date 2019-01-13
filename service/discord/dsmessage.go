@@ -12,7 +12,7 @@ type dsMessage struct {
 }
 
 func (d dsMessage) GroupID() string {
-	return d.ChannelID
+	return "discord"
 }
 
 func (d dsMessage) UserName() string {
