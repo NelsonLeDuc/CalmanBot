@@ -84,6 +84,8 @@ func HandleCalman(message service.Message, providedService service.Service, cach
 		fmt.Printf("Type: %v\n", postType)
 		fmt.Printf("Posting: %v\n\n", postString)
 		providedService.Post(service.Post{bot.Key, postString, postType, cacheID}, message)
+	} else if verboseLog {
+		fmt.Print("Empty post string -- aborting!\n\n")
 	}
 }
 
