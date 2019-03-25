@@ -14,10 +14,6 @@ import (
 )
 
 func main() {
-	if config.Configuration().VerboseMode() {
-		fmt.Print("!!!! Verbose Logging enabled !!!!\n\n")
-	}
-
 	rand.Seed(time.Now().UTC().UnixNano())
 	router := NewRouter()
 

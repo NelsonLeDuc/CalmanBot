@@ -2,6 +2,7 @@ package config
 
 import (
 	"flag"
+	"fmt"
 	"os"
 )
 
@@ -31,6 +32,10 @@ func Configuration() ProcessConfig {
 		flag.Parse()
 		discord := len(os.Getenv("discord_token")) > 0
 		config = &configHolder{*verboseMode, discord}
+
+		if *verboseMode {
+			fmt.Print("!!!! Verbose Logging enabled !!!!\n\n")
+		}
 	}
 
 	return config
