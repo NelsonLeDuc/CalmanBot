@@ -1,7 +1,7 @@
 package main
 
 import (
-	"fmt"
+	"log"
 	"os"
 
 	"github.com/nelsonleduc/calmanbot/cache"
@@ -24,12 +24,12 @@ func init() {
 }
 
 func CreateWebhook() {
-	fmt.Println("creating hook")
+	log.Println("Creating discord webhook")
 
 	// Create a new Discord session using the provided bot token.
 	dg, err := discordgo.New("Bot " + token)
 	if err != nil {
-		fmt.Println("error creating Discord session,", err)
+		log.Fatalln("error creating Discord session,", err)
 		return
 	}
 
@@ -39,7 +39,7 @@ func CreateWebhook() {
 	// Open a websocket connection to Discord and begin listening.
 	err = dg.Open()
 	if err != nil {
-		fmt.Println("error opening connection,", err)
+		log.Fatalln("error opening connection,", err)
 		return
 	}
 }
