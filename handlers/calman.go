@@ -24,7 +24,7 @@ func HandleCalman(message service.Message, providedService service.Service, cach
 	verboseLog := config.Configuration().VerboseMode()
 
 	if verboseLog {
-		fmt.Printf("Message came in: \"%v\"\n", message.Text())
+		fmt.Printf("[BEGIN] Message came in: \"%v\"\n", message.Text())
 	}
 
 	if message.UserType() != "user" {
