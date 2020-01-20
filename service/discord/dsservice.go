@@ -38,5 +38,5 @@ func (d DSService) ServiceMonitor() (service.Monitor, error) {
 }
 
 func (d DSService) MessageFromSessionAndMessage(session *discordgo.Session, message *discordgo.Message) service.Message {
-	return dsMessage{message, session}
+	return dsMessage{message, session, nil}
 }
