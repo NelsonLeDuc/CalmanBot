@@ -4,9 +4,19 @@
 	"GodepVersion": "v79",
 	"Deps": [
 		{
+			"ImportPath": "github.com/bwmarrin/discordgo",
+			"Comment": "v0.19.0",
+			"Rev": "8325a6bf6dd6c91ed4040a1617b07287b8fb0eba"
+		},
+		{
 			"ImportPath": "github.com/gorilla/mux",
 			"Comment": "v1.6.0-5-g7904d2e",
 			"Rev": "7904d2e42e7ebbdb4a6eb3e57eb201b11df25c57"
+		},
+		{
+			"ImportPath": "github.com/gorilla/websocket",
+			"Comment": "v1.4.0-6-g95ba29e",
+			"Rev": "95ba29eb981bbb27d92e1f70bf8a1949452d926b"
 		},
 		{
 			"ImportPath": "github.com/kisielk/sqlstruct",
@@ -21,6 +31,18 @@
 			"ImportPath": "github.com/lib/pq/oid",
 			"Comment": "go1.0-cutoff-195-g83612a5",
 			"Rev": "83612a56d3dd153a94a629cd64925371c9adad78"
+		},
+		{
+			"ImportPath": "golang.org/x/crypto/nacl/secretbox",
+			"Rev": "94eea52f7b742c7cbe0b03b22f0c4c8631ece122"
+		},
+		{
+			"ImportPath": "golang.org/x/crypto/poly1305",
+			"Rev": "94eea52f7b742c7cbe0b03b22f0c4c8631ece122"
+		},
+		{
+			"ImportPath": "golang.org/x/crypto/salsa20/salsa",
+			"Rev": "94eea52f7b742c7cbe0b03b22f0c4c8631ece122"
 		},
 		{
 			"ImportPath": "golang.org/x/net/html",

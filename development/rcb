@@ -1,0 +1,7 @@
+#!/bin/bash
+
+cd ..
+
+go build
+
+DATABASE_URL="user=$USER dbname=postgres sslmode=disable" ./calmanbot -v "$@"

@@ -24,6 +24,9 @@ func NewSmartCache(monitor service.Monitor) SmartCache {
 }
 
 func (s SmartCache) CachedResponse(message string) *string {
+	if s.monitor == nil {
+		return nil
+	}
 
 	cached, _ := cacheFetch("WHERE query = $1", []interface{}{message})
 
@@ -72,6 +75,10 @@ func (s SmartCache) CachedResponse(message string) *string {
 }
 
 func (s SmartCache) CacheQuery(query, result string) int {
+	if s.monitor == nil {
+		return 0
+	}
+
 	row := config.DB().QueryRow("SELECT id FROM cached WHERE query=$1 AND result=$2", query, result)
 
 	var id int
@@ -87,6 +94,10 @@ func (s SmartCache) CacheQuery(query, result string) int {
 }
 
 func (s SmartCache) LeaderboardEntries(groupID string, count int) []LeaderboardEntry {
+	if s.monitor == nil {
+		return []LeaderboardEntry{}
+	}
+
 	posts, err := topPosts(groupID, count)
 	if err != nil {
 		return []LeaderboardEntry{}

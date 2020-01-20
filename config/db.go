@@ -2,6 +2,7 @@ package config
 
 import (
 	"database/sql"
+	"fmt"
 	"log"
 	"os"
 
@@ -17,6 +18,11 @@ func init() {
 func openDB() {
 	dbURL := os.Getenv("DATABASE_URL")
 	database, err := sql.Open("postgres", dbURL)
+	if Configuration().VerboseMode() {
+		fmt.Println("=== Setting up DB ===")
+		fmt.Println("    DB: ", database)
+		fmt.Printf("DB err: %v\n\n", err)
+	}
 	if err != nil {
 		log.Fatalf("[x] Could not open the connection to the database. Reason: %s", err.Error())
 	}
