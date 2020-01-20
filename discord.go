@@ -38,6 +38,11 @@ func init() {
 		statusTuple{"nothing, I have no games :(", discordgo.GameTypeGame},
 		statusTuple{"these l33t skillz", discordgo.GameTypeWatching},
 		statusTuple{"to Alexa play Despacito", discordgo.GameTypeListening},
+		statusTuple{"Jeff Goldblum movies for quotes", discordgo.GameTypeWatching},
+		statusTuple{"jet fuel not melt steel beams", discordgo.GameTypeWatching},
+		statusTuple{"steel beams melt jet fuel", discordgo.GameTypeWatching},
+		statusTuple{"Gazorpazorpfield", discordgo.GameTypeWatching},
+		statusTuple{"Star Citizen (it's totally out!)", discordgo.GameTypeGame},
 	}
 }
 
