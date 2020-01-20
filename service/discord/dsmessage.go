@@ -1,14 +1,18 @@
 package discord
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/bwmarrin/discordgo"
+	"github.com/nelsonleduc/calmanbot/config"
 )
 
 type dsMessage struct {
 	*discordgo.Message
 	session *discordgo.Session
+
+	processedText *string
 }
 
 func (d dsMessage) GroupID() string {
@@ -28,11 +32,25 @@ func (d dsMessage) MessageID() string {
 }
 
 func (d dsMessage) Text() string {
-	modifiedText := d.Content
-	for _, mention := range d.Mentions {
-		replaceStr := "<@" + mention.ID + ">"
-		modifiedText = strings.Replace(modifiedText, replaceStr, "@"+mention.Username, -1)
+	if d.processedText != nil {
+		return *d.processedText
 	}
+	verboseLog := config.Configuration().VerboseMode()
+	modifiedText := d.Content
+	if verboseLog {
+		fmt.Printf("Parsing discord text: \"%s\"\n", modifiedText)
+	}
+	for _, mention := range d.Mentions {
+		modifiedText = strings.Replace(modifiedText, "<@!"+mention.ID+">", "@"+mention.Username, -1)
+		modifiedText = strings.Replace(modifiedText, "<@"+mention.ID+">", "@"+mention.Username, -1)
+		if verboseLog {
+			fmt.Printf("Replacing \"%v\" with \"%v\"\n", mention.ID, mention.Username)
+		}
+	}
+	if verboseLog {
+		fmt.Printf("Final discord text: \"%s\"\n", modifiedText)
+	}
+	d.processedText = &modifiedText
 	return modifiedText
 }
 
