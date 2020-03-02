@@ -27,6 +27,9 @@ func ValidateURL(u string, isImage bool) bool {
 }
 
 func IsValidHTTPURLString(s string) bool {
-	URL, _ := url.Parse(s)
+	URL, err := url.Parse(s)
+	if err != nil {
+		return false
+	}
 	return (URL.Scheme == "http" || URL.Scheme == "https")
 }
