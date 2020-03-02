@@ -208,6 +208,7 @@ func handleURLAction(a models.Action, b models.Bot) (string, error) {
 
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		log.Printf("Bad Response: %d length: %d", resp.StatusCode, len(content))
+		return "", errors.New("Bad response from server")
 	}
 
 	if verboseMode {
