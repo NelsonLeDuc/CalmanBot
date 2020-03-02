@@ -2,7 +2,7 @@ package discord
 
 import (
 	"fmt"
-	"strings"
+	"regexp"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/nelsonleduc/calmanbot/config"
@@ -41,8 +41,8 @@ func (d dsMessage) Text() string {
 		fmt.Printf("Parsing discord text: \"%s\"\n", modifiedText)
 	}
 	for _, mention := range d.Mentions {
-		modifiedText = strings.Replace(modifiedText, "<@!"+mention.ID+">", "@"+mention.Username, -1)
-		modifiedText = strings.Replace(modifiedText, "<@"+mention.ID+">", "@"+mention.Username, -1)
+		re := regexp.MustCompile("<@.?" + mention.ID + ">")
+		modifiedText = re.ReplaceAllString(modifiedText, "@"+mention.Username)
 		if verboseLog {
 			fmt.Printf("Replacing \"%v\" with \"%v\"\n", mention.ID, mention.Username)
 		}
