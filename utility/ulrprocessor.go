@@ -34,7 +34,10 @@ type imgurProcessor struct {
 }
 
 func (p imgurProcessor) CanProcess(str string) bool {
-	URL, _ := url.Parse(str)
+	URL, err := url.Parse(str)
+	if err != nil {
+		return false
+	}
 
 	if (URL.Scheme == "http" || URL.Scheme == "https") &&
 		URL.Host == "imgur.com" &&
