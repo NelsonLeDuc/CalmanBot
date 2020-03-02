@@ -189,7 +189,7 @@ func handleURLAction(a models.Action, b models.Bot) (string, error) {
 		return "", err
 	}
 
-	req.Header.Set("User-Agent", "CalmanBot/1.0")
+	req.Header.Set("User-Agent", "CalmanBot/2.5.3")
 
 	verboseMode := config.Configuration().VerboseMode()
 	if verboseMode {
