@@ -100,7 +100,7 @@ func processBuiltins(message service.Message, bot models.Bot, cache cache.QueryC
 			fmt.Printf("   Check \"%v\"\n", b.trigger)
 		}
 		for _, name := range bot.BotNames() {
-			reg, _ := regexp.Compile("(?i)&" + name + " * " + b.trigger)
+			reg, _ := regexp.Compile("(?i)@" + name + " * !" + b.trigger)
 			matched := reg.FindStringSubmatch(message.Text())
 			if len(matched) > 1 && matched[1] != "" {
 				if verboseMode {
