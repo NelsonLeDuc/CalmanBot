@@ -110,7 +110,7 @@ func responseForHelp(matched []string, bot models.Bot, cache cache.QueryCache, r
 		}
 	}
 	for _, b := range descriptions {
-		length := len("&" + botName + " " + b.trigger)
+		length := len("@" + botName + " !" + b.trigger)
 		if length > longest {
 			longest = length
 		}
@@ -134,7 +134,7 @@ func responseForHelp(matched []string, bot models.Bot, cache cache.QueryCache, r
 		helpAccumulator += "\n" + fmt.Sprintf(paddingFmt, "\""+printablePattern+"\"") + "\n\t" + *a.Description
 	}
 	for _, b := range descriptions {
-		printablePattern := "&" + botName + " " + b.trigger
+		printablePattern := "@" + botName + " !" + b.trigger
 		helpAccumulator += "\n" + fmt.Sprintf(paddingFmt, "\""+printablePattern+"\"") + "\n\t" + b.description
 	}
 
