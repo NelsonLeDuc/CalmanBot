@@ -17,6 +17,7 @@ type Post struct {
 type Service interface {
 	Post(post Post, groupMessage Message)
 	ServiceMonitor() (Monitor, error)
+	NoteProcessing(groupMessage Message)
 }
 
 type Message interface {

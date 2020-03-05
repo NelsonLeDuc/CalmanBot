@@ -78,6 +78,10 @@ func (g GMService) ServiceMonitor() (service.Monitor, error) {
 	return GroupmeMonitor{}, nil
 }
 
+func (g GMService) NoteProcessing(groupMessage service.Message) {
+	// no-op
+}
+
 func postToPastebin(text string) string {
 	data := url.Values{}
 

@@ -3,6 +3,7 @@ package discord
 import (
 	"errors"
 	"fmt"
+	"math/rand"
 	"net/url"
 	"regexp"
 
@@ -36,16 +37,36 @@ func (d DSService) Post(post service.Post, groupMessage service.Message) {
 	}
 }
 
+func (d DSService) NoteProcessing(groupMessage service.Message) {
+	discordMessage := groupMessage.(dsMessage)
+
+	emojis := []string{"🍉", "🤓", "🦥", "🍁", "🌝", "🐈", "🦞", "👒"}
+	chosen := emojis[rand.Intn(len(emojis))]
+	err := discordMessage.session.MessageReactionAdd(discordMessage.ChannelID, discordMessage.ID, chosen)
+	if err != nil && config.Configuration().VerboseMode() {
+		fmt.Printf("Error posting reaction: chose: %v err: %v\n", chosen, err)
+	}
+}
+
 func (d DSService) ServiceMonitor() (service.Monitor, error) {
 	return nil, errors.New("Unsupported")
 }
 
 func (d DSService) MessageFromSessionAndMessage(session *discordgo.Session, message *discordgo.Message) service.Message {
-	processed := processText(session, message)
+	c, err := session.Channel(message.ChannelID)
+	isDirect := false
+	if err != nil && config.Configuration().VerboseMode() {
+		fmt.Printf("Error fetching channel %v", err)
+	} else {
+		isDirect = c.Type == discordgo.ChannelTypeDM
+	}
+
+	processed := processText(session, message, isDirect)
+
 	return dsMessage{message, session, processed}
 }
 
-func processText(session *discordgo.Session, message *discordgo.Message) string {
+func processText(session *discordgo.Session, message *discordgo.Message, isDirect bool) string {
 	verboseLog := config.Configuration().VerboseMode()
 	modifiedText := message.Content
 	if verboseLog {
