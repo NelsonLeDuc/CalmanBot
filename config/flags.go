@@ -8,16 +8,22 @@ import (
 
 type ProcessConfig interface {
 	VerboseMode() bool
+	SuperVerboseMode() bool
 	EnableDiscord() bool
 }
 
 type configHolder struct {
-	verbose bool
-	discord bool
+	verbose      bool
+	superVerbose bool
+	discord      bool
 }
 
 func (c configHolder) VerboseMode() bool {
-	return c.verbose
+	return c.verbose || c.superVerbose
+}
+
+func (c configHolder) SuperVerboseMode() bool {
+	return c.superVerbose
 }
 
 func (c configHolder) EnableDiscord() bool {
@@ -28,12 +34,18 @@ var config *configHolder
 
 func Configuration() ProcessConfig {
 	if config == nil {
-		verboseMode := flag.Bool("v", false, "more logging")
+		verboseModeFlag := flag.Bool("v", false, "more logging")
+		superVerboseModeFlag := flag.Bool("vv", false, "more more logging")
 		flag.Parse()
 		discord := len(os.Getenv("discord_token")) > 0
-		config = &configHolder{*verboseMode, discord}
+		logLevel := os.Getenv("log_level")
+		superVerboseMode := *superVerboseModeFlag || logLevel == "debug"
+		verboseMode := *verboseModeFlag || superVerboseMode || logLevel == "info"
+		config = &configHolder{verboseMode, *superVerboseModeFlag, discord}
 
-		if *verboseMode {
+		if superVerboseMode {
+			fmt.Print("!!!! SUPER Verbose Logging enabled !!!!\n\n")
+		} else if verboseMode {
 			fmt.Print("!!!! Verbose Logging enabled !!!!\n\n")
 		}
 	}
