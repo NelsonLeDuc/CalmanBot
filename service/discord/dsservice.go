@@ -6,6 +6,7 @@ import (
 	"math/rand"
 	"net/url"
 	"regexp"
+	"strings"
 
 	"github.com/bwmarrin/discordgo"
 
@@ -95,6 +96,10 @@ func processText(session *discordgo.Session, message *discordgo.Message, isDirec
 	}
 	re := regexp.MustCompile("<@.?" + session.State.User.ID + ">")
 	modifiedText = re.ReplaceAllString(modifiedText, "@"+session.State.User.Username)
+
+	if isDirect && !strings.Contains(modifiedText, "@"+session.State.User.Username+" ") {
+		modifiedText = "@" + session.State.User.Username + " " + modifiedText
+	}
 
 	if verboseLog {
 		fmt.Printf("Final discord text: \"%s\"\n", modifiedText)
