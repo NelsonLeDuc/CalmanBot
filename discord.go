@@ -1,10 +1,13 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"math/rand"
 	"os"
 	"time"
+
+	"github.com/nelsonleduc/calmanbot/config"
 
 	"github.com/bwmarrin/discordgo"
 
@@ -114,6 +117,12 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	message := discordService.MessageFromSessionAndMessage(s, m.Message)
 	monitor, _ := discordService.ServiceMonitor()
 	cache := cache.NewSmartCache(monitor)
+
+	if config.Configuration().SuperVerboseMode() {
+		fmt.Printf("\n[MessageCreate fired] dssession: %+v\n", s)
+		fmt.Printf("[MessageCreate fired] dsmessage: %+v\n", *m)
+		fmt.Printf("[MessageCreate fired]   message: %+v\n\n", message)
+	}
 
 	handlers.HandleCalman(message, discordService, cache, models.PostGresRepo())
 }

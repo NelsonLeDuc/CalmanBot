@@ -57,6 +57,8 @@ func HandleCalman(message service.Message, providedService service.Service, cach
 		return
 	}
 
+	providedService.NoteProcessing(message)
+
 	var (
 		postString string
 		act        models.Action
