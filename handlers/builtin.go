@@ -11,6 +11,8 @@ import (
 	"github.com/nelsonleduc/calmanbot/handlers/models"
 )
 
+const currentCalmanBotVersion string = "v2.6.0"
+
 type builtinDescription struct {
 	trigger     string
 	description string
@@ -35,10 +37,16 @@ var showDescription = builtinDescription{
 	"Repost nth top post",
 }
 
+var versionDescription = builtinDescription{
+	"(version)",
+	"Display current version",
+}
+
 var descriptions = []builtinDescription{
 	helpDescription,
 	topDescription,
 	showDescription,
+	versionDescription,
 }
 var builtins = []builtin{
 	builtin{
@@ -52,6 +60,10 @@ var builtins = []builtin{
 	builtin{
 		showDescription,
 		responseForShow,
+	},
+	builtin{
+		versionDescription,
+		responseForVersion,
 	},
 }
 
@@ -75,6 +87,10 @@ func responseForShow(matched []string, bot models.Bot, cache cache.QueryCache, r
 	}
 
 	return entries[num].Result
+}
+
+func responseForVersion(matched []string, bot models.Bot, cache cache.QueryCache, repo models.Repo) string {
+	return currentCalmanBotVersion
 }
 
 func responseForHelp(matched []string, bot models.Bot, cache cache.QueryCache, repo models.Repo) string {
