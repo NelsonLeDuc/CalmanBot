@@ -1,0 +1,8 @@
+#!/bin/bash
+
+VER="$1"
+
+sed -i '' "s/const currentCalmanBotVersion string = \"[a-zA-Z0-9.]*\"/const currentCalmanBotVersion string = \"${VER}\"/" handlers/builtin.go
+git add handlers/builtin.go
+git commit -m "Update version to $VER"
+git tag $VER

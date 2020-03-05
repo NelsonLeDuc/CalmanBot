@@ -90,7 +90,7 @@ func responseForShow(matched []string, bot models.Bot, cache cache.QueryCache, r
 }
 
 func responseForVersion(matched []string, bot models.Bot, cache cache.QueryCache, repo models.Repo) string {
-	return currentCalmanBotVersion
+	return "I'm currently running " + currentCalmanBotVersion
 }
 
 func responseForHelp(matched []string, bot models.Bot, cache cache.QueryCache, repo models.Repo) string {
