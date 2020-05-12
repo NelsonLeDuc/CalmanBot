@@ -41,7 +41,7 @@ func Configuration() ProcessConfig {
 		logLevel := os.Getenv("log_level")
 		superVerboseMode := *superVerboseModeFlag || logLevel == "debug"
 		verboseMode := *verboseModeFlag || superVerboseMode || logLevel == "info"
-		config = &configHolder{verboseMode, *superVerboseModeFlag, discord}
+		config = &configHolder{verboseMode, superVerboseMode, discord}
 
 		if superVerboseMode {
 			fmt.Print("!!!! SUPER Verbose Logging enabled !!!!\n\n")
