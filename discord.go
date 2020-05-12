@@ -7,10 +7,10 @@ import (
 	"os"
 	"time"
 
+	"github.com/kisielk/sqlstruct"
 	"github.com/nelsonleduc/calmanbot/config"
 
 	"github.com/bwmarrin/discordgo"
-
 	"github.com/nelsonleduc/calmanbot/cache"
 	"github.com/nelsonleduc/calmanbot/handlers"
 	"github.com/nelsonleduc/calmanbot/handlers/models"
@@ -21,39 +21,67 @@ import (
 var (
 	token          string
 	discordService discord.DSService
-	statusOptions  []statusTuple
 )
 
 type statusTuple struct {
-	status   string
 	gameType discordgo.GameType
+	status   string
+}
+
+type dbStatus struct {
+	Text string `sql:"text"`
+	Type int    `sql:"type"`
+}
+
+func queryDBStatus() []statusTuple {
+	queryStr := fmt.Sprintf("SELECT %s FROM discord_status", sqlstruct.Columns(dbStatus{}))
+	rows, err := config.DB().Query(queryStr)
+	if err != nil {
+		return []statusTuple{}
+	}
+	defer rows.Close()
+
+	if config.Configuration().SuperVerboseMode() {
+		fmt.Println("Loaded status list:")
+	}
+	groupedPosts := []statusTuple{}
+	for rows.Next() {
+		var status dbStatus
+		err := sqlstruct.Scan(&status, rows)
+		if err == nil {
+			var statusType discordgo.GameType
+			switch status.Type {
+			case 0:
+				statusType = discordgo.GameTypeGame
+			case 1:
+				statusType = discordgo.GameTypeListening
+			case 2:
+				statusType = discordgo.GameTypeWatching
+			default:
+				continue
+			}
+			convertedStatus := statusTuple{statusType, status.Text}
+			groupedPosts = append(groupedPosts, convertedStatus)
+			if config.Configuration().SuperVerboseMode() {
+				fmt.Printf("   %+v\n", convertedStatus)
+			}
+		}
+	}
+
+	return groupedPosts
 }
 
 func init() {
 	token = os.Getenv("discord_token")
 	discordService = discord.DSService{}
-	statusOptions = []statusTuple{
-		statusTuple{"to some sick beats", discordgo.GameTypeListening},
-		statusTuple{"shit that doesn't suck yo", discordgo.GameTypeGame},
-		statusTuple{"something I guess?", discordgo.GameTypeWatching},
-		statusTuple{"whatever Zach thinks is good", discordgo.GameTypeGame},
-		statusTuple{"to Zach ask \"Could this game get any worse?\"", discordgo.GameTypeListening},
-		statusTuple{"nothing, I have no games :(", discordgo.GameTypeGame},
-		statusTuple{"these l33t skillz", discordgo.GameTypeWatching},
-		statusTuple{"to Alexa play Despacito", discordgo.GameTypeListening},
-		statusTuple{"Jeff Goldblum movies for quotes", discordgo.GameTypeWatching},
-		statusTuple{"jet fuel not melt steel beams", discordgo.GameTypeWatching},
-		statusTuple{"jet beams not melt steel fuel", discordgo.GameTypeWatching},
-		statusTuple{"jet steel not melt beams fuel", discordgo.GameTypeWatching},
-		statusTuple{"steel beams melt jet fuel", discordgo.GameTypeWatching},
-		statusTuple{"Gazorpazorpfield", discordgo.GameTypeWatching},
-		statusTuple{"Star Citizen", discordgo.GameTypeGame},
-		statusTuple{"The Tempest 2: Here we blow again", discordgo.GameTypeWatching},
-	}
 }
 
 func randomStatus(excluding statusTuple) statusTuple {
 	choice := excluding
+	statusOptions := queryDBStatus()
+	if len(statusOptions) == 0 {
+		return statusTuple{discordgo.GameTypeWatching, "for questions"}
+	}
 	for choice == excluding {
 		idx := rand.Intn(len(statusOptions))
 		choice = statusOptions[idx]
