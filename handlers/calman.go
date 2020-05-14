@@ -57,20 +57,19 @@ func HandleCalman(message service.Message, providedService service.Service, cach
 		return
 	}
 
-	providedService.NoteProcessing(message)
-
 	var (
 		postString string
 		act        models.Action
 	)
 
 	if handled, result := processBuiltins(message, bot, cache, repo); handled {
+		providedService.NoteProcessing(message)
 		postString = result
 	} else {
 		if cached := cache.CachedResponse(message.Text()); cached != nil {
 			postString = *cached
 		} else {
-			postString, act = responseForMessage(message, bot, repo)
+			postString, act = responseForMessage(providedService, message, bot, repo)
 		}
 
 		postString = updatedPostText(act, postString)
@@ -119,7 +118,7 @@ func processBuiltins(message service.Message, bot models.Bot, cache cache.QueryC
 	return false, ""
 }
 
-func responseForMessage(message service.Message, bot models.Bot, repo models.Repo) (string, models.Action) {
+func responseForMessage(service service.Service, message service.Message, bot models.Bot, repo models.Repo) (string, models.Action) {
 	actions, _ := repo.FetchActions(true)
 	sort.Sort(models.ByPriority(actions))
 
@@ -132,6 +131,7 @@ func responseForMessage(message service.Message, bot models.Bot, repo models.Rep
 		act    models.Action
 		sMatch string
 	)
+	found := false
 	for _, a := range actions {
 		if verboseMode {
 			fmt.Printf("   Check \"%v\"\n", *a.Pattern)
@@ -147,11 +147,16 @@ func responseForMessage(message service.Message, bot models.Bot, repo models.Rep
 				}
 				sMatch = matched[1]
 				act = a
+				found = true
 				goto Exit
 			}
 		}
 	}
 Exit:
+
+	if found {
+		service.NoteProcessing(message)
+	}
 
 	var (
 		postString string

@@ -2,7 +2,17 @@
 
 VER="$1"
 
-sed -i '' "s/const currentCalmanBotVersion string = \"[a-zA-Z0-9.]*\"/const currentCalmanBotVersion string = \"${VER}\"/" handlers/builtin.go
+unameOut="$(uname -s)"
+case "${unameOut}" in
+    Linux*)
+        sed -i "s/const currentCalmanBotVersion string = \"[a-zA-Z0-9.]*\"/const currentCalmanBotVersion string = \"${VER}\"/" handlers/builtin.go
+    ;;
+    Darwin*)
+        sed -i '' "s/const currentCalmanBotVersion string = \"[a-zA-Z0-9.]*\"/const currentCalmanBotVersion string = \"${VER}\"/" handlers/builtin.go
+    ;;
+esac
+
+
 git add handlers/builtin.go
 git commit -m "Update version to $VER"
 git tag $VER
