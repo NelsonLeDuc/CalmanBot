@@ -122,15 +122,11 @@ func CreateWebhook() {
 		return
 	}
 
-	go func() {
-		status := randomStatus(statusTuple{})
+	status := statusTuple{}
+	for ; true; <-time.Tick(30 * time.Minute) {
+		status = randomStatus(status)
 		postStatus(dg, status)
-		c := time.Tick(30 * time.Minute)
-		for range c {
-			status = randomStatus(status)
-			postStatus(dg, status)
-		}
-	}()
+	}
 }
 
 // This function will be called (due to AddHandler above) every time a new
