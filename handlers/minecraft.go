@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/whatupdave/mcping"
@@ -23,16 +24,18 @@ func HandleMinecraft(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	split := strings.Split(query, ":")
+	address := split[0]
 	status, err := mcping.Ping(query)
 	if err == nil {
 		output := map[string]string{
-			"description": "Server is Online with " + strconv.Itoa(status.Online) + "/" + strconv.Itoa(status.Max),
+			"description": address + " is Online with " + strconv.Itoa(status.Online) + "/" + strconv.Itoa(status.Max),
 		}
 		json, _ := json.Marshal(output)
 		w.Write(json)
 	} else {
 		output := map[string]string{
-			"description": "Server is Offline",
+			"description": address + " is Offline",
 		}
 		json, _ := json.Marshal(output)
 		w.Write(json)
