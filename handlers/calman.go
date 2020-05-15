@@ -286,6 +286,7 @@ func updateAction(a *models.Action, text string) {
 	text = url.QueryEscape(text)
 
 	a.Content = strings.Replace(a.Content, "{_text_}", text, -1)
+	a.Content = strings.Replace(a.Content, "{_me_}", "localhost:"+config.Configuration().Port(), -1)
 
 	r, _ := regexp.Compile("(?i){_key\\((.+)\\)_}")
 	matched := r.FindStringSubmatch(a.Content)
