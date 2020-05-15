@@ -5,7 +5,6 @@ import (
 	"log"
 	"math/rand"
 	"net/http"
-	"os"
 	"time"
 
 	"github.com/nelsonleduc/calmanbot/config"
@@ -30,10 +29,7 @@ func main() {
 }
 
 func GetPort() string {
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = "4000"
-	}
+	port := config.Configuration().Port()
 
 	if config.Configuration().VerboseMode() {
 		fmt.Printf("Listening on port %v\n\n", port)
