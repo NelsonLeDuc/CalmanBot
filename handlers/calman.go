@@ -172,7 +172,7 @@ Exit:
 			fmt.Printf("                Update: \"%v\"\n", act.Content)
 		}
 		if act.IsURLType() {
-			postString, err = handleURLAction(act, bot)
+			postString, err = handleURLAction(act, triggerHandler, bot, message)
 		} else if act.IsTriggerType() {
 			postString, err = handleTriggerAction(act, triggerHandler, message)
 		} else {
@@ -199,24 +199,37 @@ func handleTriggerAction(action models.Action, triggerHandler service.TriggerWra
 		return "", errors.New("Invalid trigger type")
 	}
 
+	triggerName := action.Content
+	r, _ := regexp.Compile("(?i){_trigger\\(([^\\)]+)\\)_}")
+	matched := r.FindStringSubmatch(action.Content)
+	if len(matched) >= 2 {
+		triggerName = matched[1]
+	}
+
 	if enableAction {
-		triggerHandler.EnableTrigger(action.Content, message)
+		triggerHandler.EnableTrigger(triggerName, message)
 		return "Enabled", nil
 	} else if statusAction {
-		if triggerHandler.IsTriggerConfigured(action.Content, message) {
+		if triggerHandler.IsTriggerConfigured(triggerName, message) {
 			return "Enabled", nil
 		}
 		return "Disabled", nil
 	}
 
-	triggerHandler.DisableTrigger(action.Content, message)
+	triggerHandler.DisableTrigger(triggerName, message)
 	return "Disabled", nil
 }
 
-func handleURLAction(a models.Action, b models.Bot) (string, error) {
+func handleURLAction(a models.Action, triggerHandler service.TriggerWrangler, b models.Bot, message service.Message) (string, error) {
+	url := a.Content
+	r, _ := regexp.Compile("(?i){_url\\(([^\\)]+)\\)_}")
+	matched := r.FindStringSubmatch(a.Content)
+	if len(matched) >= 2 {
+		url = matched[1]
+	}
 
 	client := &http.Client{}
-	req, err := http.NewRequest("GET", a.Content, nil)
+	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return "", err
 	}
@@ -236,7 +249,6 @@ func handleURLAction(a models.Action, b models.Bot) (string, error) {
 	defer resp.Body.Close()
 
 	content, _ := ioutil.ReadAll(resp.Body)
-	pathString := *a.DataPath
 
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		log.Printf("Bad Response: %d length: %d", resp.StatusCode, len(content))
@@ -245,6 +257,15 @@ func handleURLAction(a models.Action, b models.Bot) (string, error) {
 
 	if verboseMode {
 		fmt.Printf("   Content: %d bytes\n", len(content))
+	}
+
+	if a.IsTriggerType() && triggerHandler != nil {
+		return handleTriggerAction(a, triggerHandler, message)
+	}
+
+	pathString := *a.DataPath
+
+	if verboseMode {
 		fmt.Printf("   Path: %v\n", pathString)
 	}
 

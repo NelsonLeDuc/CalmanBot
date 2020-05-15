@@ -20,7 +20,7 @@ func (a Action) IsURLType() bool {
 }
 
 func (a Action) IsTriggerType() bool {
-	return strings.HasPrefix(a.ContentType, "TRIGGER")
+	return strings.Contains(a.ContentType, "TRIGGER")
 }
 
 func (a Action) IsImageType() bool {

@@ -40,4 +40,10 @@ var routes = Routes{
 		"/minecraftStatus",
 		handlers.HandleMinecraft,
 	},
+	Route{
+		"MinecraftAdd",
+		"GET",
+		"/minecraftTrack",
+		handlers.HandleTrackMinecraft,
+	},
 }
