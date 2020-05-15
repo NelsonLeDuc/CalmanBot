@@ -22,8 +22,8 @@ func main() {
 		go CreateWebhook()
 	}
 
-	if minecraftAddress := config.Configuration().MinecraftAddress(); len(minecraftAddress) > 0 {
-		go handlers.MonitorMinecraft(minecraftAddress, 15)
+	if config.Configuration().EnableMinecraft() {
+		go handlers.MonitorMinecraft()
 	}
 
 	log.Fatal(http.ListenAndServe(GetPort(), router))

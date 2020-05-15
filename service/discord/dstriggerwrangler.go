@@ -42,11 +42,9 @@ func (t triggerWrangler) IsTriggerConfigured(id string, groupMessage service.Mes
 	row := config.DB().QueryRow(queryStr, discordMessage.ChannelID, id)
 	var count int
 	err := row.Scan(&count)
-	fmt.Printf("%v\n", err)
 	if err != nil {
 		return false
 	}
-	fmt.Printf("%v\n", count)
 
 	return count > 0
 }
@@ -68,7 +66,9 @@ func (t triggerWrangler) HandleTrigger(id string, post service.Post) {
 		if err != nil {
 			continue
 		}
-		fmt.Printf("   %+v\n", trigger)
+		if config.Configuration().SuperVerboseMode() {
+			fmt.Printf("   %+v\n", trigger)
+		}
 		t.service.postToChannel(post, trigger.ChannelID)
 	}
 }

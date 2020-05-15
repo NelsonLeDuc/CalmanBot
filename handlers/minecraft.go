@@ -8,29 +8,87 @@ import (
 	"strings"
 	"time"
 
+	"github.com/kisielk/sqlstruct"
+	"github.com/nelsonleduc/calmanbot/config"
 	"github.com/nelsonleduc/calmanbot/service"
 	"github.com/whatupdave/mcping"
 )
 
-func MonitorMinecraft(address string, minuteCadence int) {
-	var prevState *bool
-	for ; true; <-time.Tick(time.Duration(minuteCadence) * time.Minute) {
-		status, err := mcping.Ping(address)
-		currentState := err == nil
-		fmt.Printf("[MC] Minecraft server status for %s: %v %v\n", address, status.Version, err)
-		if prevState != nil && *prevState != currentState {
-			statusText := "West server is now offline!"
-			if currentState {
-				statusText = "West server is now online!"
-			}
-			post := service.Post{"", statusText, service.PostTypeText, 0}
-			service.FanoutTrigger("MCSTATUS", post)
+type minecraftServer struct {
+	Address string  `sql:"address"`
+	Name    *string `sql:"name"`
+}
+
+func storedAddresses() []minecraftServer {
+	queryStr := fmt.Sprintf("SELECT %s FROM minecraft_servers", sqlstruct.Columns(minecraftServer{}))
+	rows, err := config.DB().Query(queryStr)
+	if err != nil {
+		return []minecraftServer{}
+	}
+	defer rows.Close()
+
+	if config.Configuration().SuperVerboseMode() {
+		fmt.Println("Loaded server list:")
+	}
+	servers := []minecraftServer{}
+	for rows.Next() {
+		var server minecraftServer
+		err := sqlstruct.Scan(&server, rows)
+		if err != nil {
+			continue
 		}
-		prevState = &currentState
+		if config.Configuration().SuperVerboseMode() {
+			fmt.Printf("   %+v\n", server)
+		}
+		servers = append(servers, server)
+	}
+	return servers
+}
+
+var trackedServers map[string]bool
+
+func init() {
+	trackedServers = make(map[string]bool)
+}
+
+func MonitorMinecraft() {
+	for _, server := range storedAddresses() {
+		if trackedServers[server.Address] {
+			continue
+		}
+		trackedServers[server.Address] = true
+		address := server.Address
+		name := server.Name
+		go func() {
+			var prevState *bool
+			for ; true; <-time.Tick(time.Duration(15) * time.Minute) {
+				status, err := mcping.Ping(address)
+				currentState := err == nil
+				fmt.Printf("[MC] Minecraft server status for %s: %v %v\n", address, status.Version, err)
+				identifierString := name
+				if name == nil || len(*name) == 0 {
+					identifierString = &address
+				}
+				if prevState != nil && *prevState != currentState {
+					statusText := *identifierString + " is now offline!"
+					if currentState {
+						statusText = *identifierString + " is now online!"
+					}
+					post := service.Post{"", statusText, service.PostTypeText, 0}
+					service.FanoutTrigger("address", post)
+				}
+				prevState = &currentState
+			}
+		}()
 	}
 }
 
 func HandleMinecraft(w http.ResponseWriter, r *http.Request) {
+	if !config.Configuration().EnableMinecraft() {
+		w.WriteHeader(http.StatusServiceUnavailable)
+		return
+	}
+
 	query := r.URL.Query().Get("addr")
 	if query == "" {
 		return
@@ -52,4 +110,28 @@ func HandleMinecraft(w http.ResponseWriter, r *http.Request) {
 		json, _ := json.Marshal(output)
 		w.Write(json)
 	}
+}
+
+func HandleTrackMinecraft(w http.ResponseWriter, r *http.Request) {
+	if !config.Configuration().EnableMinecraft() {
+		w.WriteHeader(http.StatusServiceUnavailable)
+		return
+	}
+
+	query := r.URL.Query().Get("addr")
+	name := r.URL.Query().Get("name")
+	if query == "" {
+		return
+	}
+
+	if len(name) > 0 {
+		queryStr := "INSERT INTO minecraft_servers(address, name) VALUES($1, $2) ON CONFLICT DO UPDATE"
+		s, e := config.DB().Exec(queryStr, query, name)
+		fmt.Printf("%v %v \n", s, e)
+	} else {
+		queryStr := "INSERT INTO minecraft_servers(address, name) VALUES($1, NULL) ON CONFLICT DO NOTHING"
+		s, e := config.DB().Exec(queryStr, query)
+		fmt.Printf("n %v %v \n", s, e)
+	}
+	go MonitorMinecraft()
 }
