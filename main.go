@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/nelsonleduc/calmanbot/config"
+	"github.com/nelsonleduc/calmanbot/handlers"
 
 	"github.com/gorilla/mux"
 )
@@ -18,7 +19,11 @@ func main() {
 	router := NewRouter()
 
 	if config.Configuration().EnableDiscord() {
-		CreateWebhook()
+		go CreateWebhook()
+	}
+
+	if minecraftAddress := config.Configuration().MinecraftAddress(); len(minecraftAddress) > 0 {
+		go handlers.MonitorMinecraft(minecraftAddress, 15)
 	}
 
 	log.Fatal(http.ListenAndServe(GetPort(), router))
