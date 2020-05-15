@@ -19,6 +19,10 @@ func (a Action) IsURLType() bool {
 	return strings.HasPrefix(a.ContentType, "URL")
 }
 
+func (a Action) IsTriggerType() bool {
+	return strings.HasPrefix(a.ContentType, "TRIGGER")
+}
+
 func (a Action) IsImageType() bool {
 	return strings.HasSuffix(a.ContentType, "IMAGE")
 }

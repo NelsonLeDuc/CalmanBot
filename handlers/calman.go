@@ -62,7 +62,7 @@ func HandleCalman(message service.Message, providedService service.Service, cach
 		act        models.Action
 	)
 
-	if handled, result := processBuiltins(message, bot, cache, repo); handled {
+	if handled, result := processBuiltins(providedService, message, bot, cache, repo); handled {
 		providedService.NoteProcessing(message)
 		postString = result
 	} else {
@@ -90,7 +90,7 @@ func HandleCalman(message service.Message, providedService service.Service, cach
 	}
 }
 
-func processBuiltins(message service.Message, bot models.Bot, cache cache.QueryCache, repo models.Repo) (bool, string) {
+func processBuiltins(service service.Service, message service.Message, bot models.Bot, cache cache.QueryCache, repo models.Repo) (bool, string) {
 	verboseMode := config.Configuration().VerboseMode()
 	if verboseMode {
 		fmt.Println("Running builtins")
@@ -107,7 +107,7 @@ func processBuiltins(message service.Message, bot models.Bot, cache cache.QueryC
 					fmt.Printf("      Matched \"%+v\"\n", reg)
 					fmt.Printf("      Name \"%v\"\n", name)
 				}
-				return true, b.handler(matched, bot, cache, repo)
+				return true, b.handler(matched, builtInParams{bot, cache, repo, service})
 			}
 		}
 	}
@@ -119,7 +119,8 @@ func processBuiltins(message service.Message, bot models.Bot, cache cache.QueryC
 }
 
 func responseForMessage(service service.Service, message service.Message, bot models.Bot, repo models.Repo) (string, models.Action) {
-	actions, _ := repo.FetchActions(true)
+	triggerHandler, triggerErr := service.ServiceTriggerWrangler()
+	actions, _ := repo.FetchActions(true, triggerErr == nil)
 	sort.Sort(models.ByPriority(actions))
 
 	verboseMode := config.Configuration().VerboseMode()
@@ -172,6 +173,8 @@ Exit:
 		}
 		if act.IsURLType() {
 			postString, err = handleURLAction(act, bot)
+		} else if act.IsTriggerType() {
+			postString, err = handleTriggerAction(act, triggerHandler, message)
 		} else {
 			postString = act.Content
 		}
@@ -186,6 +189,28 @@ Exit:
 	}
 
 	return postString, act
+}
+
+func handleTriggerAction(action models.Action, triggerHandler service.TriggerWrangler, message service.Message) (string, error) {
+	enableAction := strings.HasSuffix(action.ContentType, "ENABLE")
+	disableAction := strings.HasSuffix(action.ContentType, "DISABLE")
+	statusAction := strings.HasSuffix(action.ContentType, "STATUS")
+	if !enableAction && !disableAction && !statusAction {
+		return "", errors.New("Invalid trigger type")
+	}
+
+	if enableAction {
+		triggerHandler.EnableTrigger(action.Content, message)
+		return "Enabled", nil
+	} else if statusAction {
+		if triggerHandler.IsTriggerConfigured(action.Content, message) {
+			return "Enabled", nil
+		}
+		return "Disabled", nil
+	}
+
+	triggerHandler.DisableTrigger(action.Content, message)
+	return "Disabled", nil
 }
 
 func handleURLAction(a models.Action, b models.Bot) (string, error) {
@@ -257,8 +282,6 @@ func updatedPostText(a models.Action, text string) string {
 	var updated string
 	if strings.Contains(*a.PostText, "{_text_}") {
 		updated = strings.Replace(*a.PostText, "{_text_}", text, -1)
-	} else {
-		updated = *a.PostText + text
 	}
 
 	return updated

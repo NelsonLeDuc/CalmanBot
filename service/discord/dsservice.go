@@ -14,12 +14,28 @@ import (
 	"github.com/nelsonleduc/calmanbot/service"
 )
 
-type DSService struct{}
+type DSService interface {
+	service.Service
+	MessageFromSessionAndMessage(session *discordgo.Session, message *discordgo.Message) service.Message
+}
+type dsService struct {
+	session *discordgo.Session
+}
 
-func (d DSService) Post(post service.Post, groupMessage service.Message) {
+func NewDSService(discordSession *discordgo.Session) DSService {
+	newService := dsService{discordSession}
+	service.RegisterServiceForTriggers(newService)
+	return newService
+}
+
+func (d dsService) Post(post service.Post, groupMessage service.Message) {
 	discordMessage := groupMessage.(dsMessage)
+	d.postToChannel(post, discordMessage.ChannelID)
+}
+
+func (d dsService) postToChannel(post service.Post, channelID string) {
 	if post.Type == service.PostTypeText {
-		discordMessage.session.ChannelMessageSend(discordMessage.ChannelID, post.Text)
+		d.session.ChannelMessageSend(channelID, post.Text)
 	} else if post.Type == service.PostTypeImage {
 		var footer *discordgo.MessageEmbedFooter
 		if postURL, err := url.Parse(post.Text); err == nil {
@@ -29,7 +45,7 @@ func (d DSService) Post(post service.Post, groupMessage service.Message) {
 		} else {
 			footer = nil
 		}
-		discordMessage.session.ChannelMessageSendEmbed(discordMessage.ChannelID, &discordgo.MessageEmbed{
+		d.session.ChannelMessageSendEmbed(channelID, &discordgo.MessageEmbed{
 			Image: &discordgo.MessageEmbedImage{
 				URL: post.Text,
 			},
@@ -38,7 +54,7 @@ func (d DSService) Post(post service.Post, groupMessage service.Message) {
 	}
 }
 
-func (d DSService) NoteProcessing(groupMessage service.Message) {
+func (d dsService) NoteProcessing(groupMessage service.Message) {
 	discordMessage := groupMessage.(dsMessage)
 
 	emojis := []string{"🍉", "🤓", "🦥", "🍁", "🌝", "🐈", "🦞", "👒"}
@@ -49,11 +65,11 @@ func (d DSService) NoteProcessing(groupMessage service.Message) {
 	}
 }
 
-func (d DSService) ServiceMonitor() (service.Monitor, error) {
+func (d dsService) ServiceMonitor() (service.Monitor, error) {
 	return nil, errors.New("Unsupported")
 }
 
-func (d DSService) MessageFromSessionAndMessage(session *discordgo.Session, message *discordgo.Message) service.Message {
+func (d dsService) MessageFromSessionAndMessage(session *discordgo.Session, message *discordgo.Message) service.Message {
 	c, err := session.Channel(message.ChannelID)
 	isDirect := false
 	if err != nil && config.Configuration().VerboseMode() {

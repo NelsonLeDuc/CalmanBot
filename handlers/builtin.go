@@ -9,6 +9,7 @@ import (
 
 	"github.com/nelsonleduc/calmanbot/cache"
 	"github.com/nelsonleduc/calmanbot/handlers/models"
+	"github.com/nelsonleduc/calmanbot/service"
 )
 
 const currentCalmanBotVersion string = "v2.8.1"
@@ -18,9 +19,16 @@ type builtinDescription struct {
 	description string
 }
 
+type builtInParams struct {
+	bot     models.Bot
+	cache   cache.QueryCache
+	repo    models.Repo
+	service service.Service
+}
+
 type builtin struct {
 	builtinDescription
-	handler func([]string, models.Bot, cache.QueryCache, models.Repo) string
+	handler func([]string, builtInParams) string
 }
 
 // Descriptions
@@ -68,8 +76,8 @@ var builtins = []builtin{
 }
 
 // Handlers
-func responseForLeaderboard(matched []string, bot models.Bot, cache cache.QueryCache, repo models.Repo) string {
-	entries := cache.LeaderboardEntries(bot.GroupID, 10)
+func responseForLeaderboard(matched []string, params builtInParams) string {
+	entries := params.cache.LeaderboardEntries(params.bot.GroupID, 10)
 	leaderboardAccumulatr := "Top posts:"
 	for _, e := range entries {
 		leaderboardAccumulatr += "\n" + strconv.Itoa(e.LikeCount) + "    " + e.Query
@@ -78,8 +86,8 @@ func responseForLeaderboard(matched []string, bot models.Bot, cache cache.QueryC
 	return leaderboardAccumulatr
 }
 
-func responseForShow(matched []string, bot models.Bot, cache cache.QueryCache, repo models.Repo) string {
-	entries := cache.LeaderboardEntries(bot.GroupID, 10)
+func responseForShow(matched []string, params builtInParams) string {
+	entries := params.cache.LeaderboardEntries(params.bot.GroupID, 10)
 	num, error := strconv.Atoi(matched[1])
 	num--
 	if len(entries) <= num || error != nil {
@@ -89,16 +97,17 @@ func responseForShow(matched []string, bot models.Bot, cache cache.QueryCache, r
 	return entries[num].Result
 }
 
-func responseForVersion(matched []string, bot models.Bot, cache cache.QueryCache, repo models.Repo) string {
+func responseForVersion(matched []string, params builtInParams) string {
 	return "I'm currently running " + currentCalmanBotVersion
 }
 
-func responseForHelp(matched []string, bot models.Bot, cache cache.QueryCache, repo models.Repo) string {
-	actions, _ := repo.FetchActions(true)
+func responseForHelp(matched []string, params builtInParams) string {
+	_, e := params.service.ServiceTriggerWrangler()
+	actions, _ := params.repo.FetchActions(true, e == nil)
 	sort.Sort(models.ByPriority(actions))
-	botName := bot.SanitizedBotNames()[0]
+	botName := params.bot.SanitizedBotNames()[0]
 
-	helpAccumulator := "Commands:"
+	helpAccumulator := "```Commands:"
 	longest := 0
 	for _, a := range actions {
 		if a.Description == nil || a.Pattern == nil {
@@ -131,12 +140,12 @@ func responseForHelp(matched []string, bot models.Bot, cache cache.QueryCache, r
 		}
 		printablePattern = re.ReplaceAllLiteralString(printablePattern, thing)
 
-		helpAccumulator += "\n" + fmt.Sprintf(paddingFmt, "\""+printablePattern+"\"") + "\n\t" + *a.Description
+		helpAccumulator += "\n" + fmt.Sprintf(paddingFmt, printablePattern) + "\n\t" + *a.Description
 	}
 	for _, b := range descriptions {
 		printablePattern := "@" + botName + " !" + b.trigger
-		helpAccumulator += "\n" + fmt.Sprintf(paddingFmt, "\""+printablePattern+"\"") + "\n\t" + b.description
+		helpAccumulator += "\n" + fmt.Sprintf(paddingFmt, printablePattern) + "\n\t" + b.description
 	}
 
-	return helpAccumulator
+	return helpAccumulator + "```"
 }

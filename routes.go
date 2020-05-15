@@ -34,4 +34,10 @@ var routes = Routes{
 		"/jeff",
 		handlers.HandleJeffFetch,
 	},
+	Route{
+		"Minecraft",
+		"GET",
+		"/minecraftStatus",
+		handlers.HandleMinecraft,
+	},
 }
