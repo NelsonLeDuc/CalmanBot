@@ -17,8 +17,6 @@ func actionFetch(whereStr string, values []interface{}) ([]Action, error) {
 
 	queryStr := fmt.Sprintf("SELECT %s FROM actions", sqlstruct.Columns(Action{}))
 
-	fmt.Printf("qrs: %v\n", queryStr+" "+whereStr)
-
 	rows, err := config.DB().Query(queryStr+" "+whereStr, values...)
 	if err != nil {
 		return []Action{}, err

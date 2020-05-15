@@ -282,6 +282,8 @@ func updatedPostText(a models.Action, text string) string {
 	var updated string
 	if strings.Contains(*a.PostText, "{_text_}") {
 		updated = strings.Replace(*a.PostText, "{_text_}", text, -1)
+	} else {
+		updated = *a.PostText
 	}
 
 	return updated
