@@ -1,7 +1,7 @@
 {
 	"ImportPath": "github.com/nelsonleduc/calmanbot",
-	"GoVersion": "go1.9",
-	"GodepVersion": "v79",
+	"GoVersion": "go1.14",
+	"GodepVersion": "v80",
 	"Deps": [
 		{
 			"ImportPath": "github.com/bwmarrin/discordgo",
@@ -19,6 +19,10 @@
 			"Rev": "95ba29eb981bbb27d92e1f70bf8a1949452d926b"
 		},
 		{
+			"ImportPath": "github.com/jmoiron/jsonq",
+			"Rev": "e874b168d07ecc7808bc950a17998a8aa3141d82"
+		},
+		{
 			"ImportPath": "github.com/kisielk/sqlstruct",
 			"Rev": "648daed35d49dac24a4bff253b190a80da3ab6a5"
 		},
@@ -31,6 +35,10 @@
 			"ImportPath": "github.com/lib/pq/oid",
 			"Comment": "go1.0-cutoff-195-g83612a5",
 			"Rev": "83612a56d3dd153a94a629cd64925371c9adad78"
+		},
+		{
+			"ImportPath": "github.com/whatupdave/mcping",
+			"Rev": "45b6a3b38c1415180d991c6a00ccc95abfa5df84"
 		},
 		{
 			"ImportPath": "golang.org/x/crypto/nacl/secretbox",
