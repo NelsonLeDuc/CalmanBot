@@ -82,6 +82,10 @@ func (g GMService) NoteProcessing(groupMessage service.Message) {
 	// no-op
 }
 
+func (g GMService) ServiceTriggerWrangler() (service.TriggerWrangler, error) {
+	return nil, errors.New("Unsupported")
+}
+
 func postToPastebin(text string) string {
 	data := url.Values{}
 

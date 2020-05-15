@@ -9,13 +9,15 @@ import (
 
 type Repo interface {
 	FetchBot(id string) (Bot, error)
-	FetchActions(primary bool) ([]Action, error)
+	FetchActions(primary bool, includeTriggers bool) ([]Action, error)
 	FetchAction(id int) (Action, error)
 }
 
 func actionFetch(whereStr string, values []interface{}) ([]Action, error) {
 
 	queryStr := fmt.Sprintf("SELECT %s FROM actions", sqlstruct.Columns(Action{}))
+
+	fmt.Printf("qrs: %v\n", queryStr+" "+whereStr)
 
 	rows, err := config.DB().Query(queryStr+" "+whereStr, values...)
 	if err != nil {
@@ -56,7 +58,7 @@ func (p pgdb) FetchBot(id string) (Bot, error) {
 	return bot, err
 }
 
-func (p pgdb) FetchActions(primary bool) ([]Action, error) {
+func (p pgdb) FetchActions(primary bool, includeTriggers bool) ([]Action, error) {
 	var (
 		values   []interface{}
 		queryStr string
@@ -64,6 +66,9 @@ func (p pgdb) FetchActions(primary bool) ([]Action, error) {
 	if primary {
 		queryStr = "WHERE main = $1"
 		values = append(values, primary)
+	}
+	if !includeTriggers {
+		queryStr += " AND type NOT LIKE 'TRIGGER%'"
 	}
 
 	return actionFetch(queryStr, values)

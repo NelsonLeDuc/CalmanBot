@@ -8,13 +8,25 @@ import (
 	"strings"
 	"time"
 
+	"github.com/nelsonleduc/calmanbot/service"
 	"github.com/whatupdave/mcping"
 )
 
 func MonitorMinecraft(address string, minuteCadence int) {
+	var prevState *bool
 	for ; true; <-time.Tick(time.Duration(minuteCadence) * time.Minute) {
 		status, err := mcping.Ping(address)
+		currentState := err == nil
 		fmt.Printf("[MC] Minecraft server status for %s: %v %v\n", address, status.Version, err)
+		if prevState != nil && *prevState != currentState {
+			statusText := "West server is now offline!"
+			if currentState {
+				statusText = "West server is now online!"
+			}
+			post := service.Post{"", statusText, service.PostTypeText, 0}
+			service.FanoutTrigger("MCSTATUS", post)
+		}
+		prevState = &currentState
 	}
 }
 

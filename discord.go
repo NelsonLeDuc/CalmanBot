@@ -73,7 +73,6 @@ func queryDBStatus() []statusTuple {
 
 func init() {
 	token = os.Getenv("discord_token")
-	discordService = discord.DSService{}
 }
 
 func randomStatus(excluding statusTuple) statusTuple {
@@ -111,6 +110,8 @@ func CreateWebhook() {
 		log.Fatalln("error creating Discord session,", err)
 		return
 	}
+
+	discordService = discord.NewDSService(dg)
 
 	// Register the messageCreate func as a callback for MessageCreate events.
 	dg.AddHandler(messageCreate)
