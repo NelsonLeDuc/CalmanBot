@@ -11,6 +11,7 @@ const (
 type Post struct {
 	Key     string
 	Text    string
+	RawText string
 	Type    PostType
 	CacheID int
 }
