@@ -46,4 +46,10 @@ var routes = Routes{
 		"/minecraftTrack",
 		handlers.HandleTrackMinecraft,
 	},
+	Route{
+		"YoutubeSong",
+		"GET",
+		"/youtubeSong",
+		handlers.HandleYoutubeLinkt,
+	},
 }

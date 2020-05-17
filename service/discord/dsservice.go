@@ -34,7 +34,7 @@ func (d dsService) Post(post service.Post, groupMessage service.Message) {
 }
 
 func (d dsService) postToChannel(post service.Post, channelID string) {
-	if post.Type == service.PostTypeText {
+	if post.Type == service.PostTypeText || post.Type == service.PostTypeURL {
 		d.session.ChannelMessageSend(channelID, post.Text)
 	} else if post.Type == service.PostTypeImage {
 		var footer *discordgo.MessageEmbedFooter
