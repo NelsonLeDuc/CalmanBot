@@ -34,7 +34,7 @@ func (d dsService) Post(post service.Post, groupMessage service.Message) {
 }
 
 func (d dsService) postToChannel(post service.Post, channelID string) {
-	if post.Type == service.PostTypeText || post.Type == service.PostTypeURL {
+	if post.Type == service.PostTypeText {
 		d.session.ChannelMessageSend(channelID, post.Text)
 	} else if post.Type == service.PostTypeImage {
 		var footer *discordgo.MessageEmbedFooter
@@ -50,6 +50,11 @@ func (d dsService) postToChannel(post service.Post, channelID string) {
 				URL: post.Text,
 			},
 			Footer: footer,
+		})
+	} else if post.Type == service.PostTypeURL {
+		d.session.ChannelMessageSendEmbed(channelID, &discordgo.MessageEmbed{
+			URL:   post.RawText,
+			Title: post.Text,
 		})
 	}
 }

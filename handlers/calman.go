@@ -58,8 +58,9 @@ func HandleCalman(message service.Message, providedService service.Service, cach
 	}
 
 	var (
-		postString string
-		act        models.Action
+		postString    string
+		rawPostString string
+		act           models.Action
 	)
 
 	if handled, result := processBuiltins(providedService, message, bot, cache, repo); handled {
@@ -72,6 +73,7 @@ func HandleCalman(message service.Message, providedService service.Service, cach
 			postString, act = responseForMessage(providedService, message, bot, repo)
 		}
 
+		rawPostString = postString
 		postString = updatedPostText(act, postString)
 		postString = utility.ProcessedString(postString)
 	}
@@ -84,7 +86,7 @@ func HandleCalman(message service.Message, providedService service.Service, cach
 		fmt.Printf("Action: %v\n", act.Content)
 		fmt.Printf("Type: %v\n", postType)
 		fmt.Printf("Posting: %v\n\n", postString)
-		providedService.Post(service.Post{bot.Key, postString, postType, cacheID}, message)
+		providedService.Post(service.Post{bot.Key, postString, rawPostString, postType, cacheID}, message)
 	} else if verboseLog {
 		fmt.Print("Empty post string -- aborting!\n\n")
 	}

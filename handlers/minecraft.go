@@ -79,7 +79,7 @@ func MonitorMinecraft() {
 					if currentState {
 						statusText = *identifierString + " is now online!"
 					}
-					post := service.Post{"", statusText, service.PostTypeText, 0}
+					post := service.Post{"", statusText, statusText, service.PostTypeText, 0}
 					service.FanoutTrigger(address, post)
 				}
 				prevState = &currentState
