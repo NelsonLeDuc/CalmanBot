@@ -3,16 +3,25 @@ package models
 import "strings"
 
 type Action struct {
-	ContentType    string  `sql:"type"`
-	Content        string  `sql:"content"`
-	DataPath       *string `sql:"data_path"`
-	Pattern        *string `sql:"pattern"`
-	FallbackAction *int    `sql:"fallback_action"`
-	Primary        bool    `sql:"main"`
-	Priority       int     `sql:"priority"`
-	ID             int     `sql:"id"`
-	PostText       *string `sql:"post_text"`
-	Description    *string `sql:"description"`
+	ContentType     string  `sql:"type"`
+	Content         string  `sql:"content"`
+	DataPath        *string `sql:"data_path"`
+	Pattern         *string `sql:"pattern"`
+	FallbackAction  *int    `sql:"fallback_action"`
+	Primary         bool    `sql:"main"`
+	Priority        int     `sql:"priority"`
+	ID              int     `sql:"id"`
+	PostText        *string `sql:"post_text"`
+	Description     *string `sql:"description"`
+	NoteProcessMode int     `sql:"note_process_mode"`
+}
+
+func (a Action) WantsImmediateNote() bool {
+	return a.NoteProcessMode == 0
+}
+
+func (a Action) WantsPostingNote() bool {
+	return a.NoteProcessMode == 1
 }
 
 func (a Action) IsURLType() bool {
@@ -25,6 +34,10 @@ func (a Action) IsTriggerType() bool {
 
 func (a Action) IsImageType() bool {
 	return strings.HasSuffix(a.ContentType, "IMAGE")
+}
+
+func (a Action) IsURLPostType() bool {
+	return strings.HasSuffix(a.ContentType, "URL")
 }
 
 type ByPriority []Action

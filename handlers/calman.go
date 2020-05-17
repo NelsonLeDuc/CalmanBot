@@ -155,7 +155,7 @@ func responseForMessage(service service.Service, message service.Message, bot mo
 	}
 Exit:
 
-	if found {
+	if found && act.WantsImmediateNote() {
 		service.NoteProcessing(message)
 	}
 
@@ -186,6 +186,10 @@ Exit:
 			act, _ = repo.FetchAction(*act.FallbackAction)
 			log.Printf("Fallback to: %s because %v", act.Content, err)
 		}
+	}
+
+	if len(postString) > 0 && act.WantsPostingNote() {
+		service.NoteProcessing(message)
 	}
 
 	return postString, act
@@ -314,6 +318,8 @@ func updatedPostText(a models.Action, text string) string {
 func postTypeForAction(a models.Action) service.PostType {
 	if a.IsImageType() {
 		return service.PostTypeImage
+	} else if a.IsURLPostType() {
+		return service.PostTypeURL
 	} else {
 		return service.PostTypeText
 	}

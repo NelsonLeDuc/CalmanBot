@@ -5,6 +5,7 @@ type PostType int
 const (
 	PostTypeText PostType = iota
 	PostTypeImage
+	PostTypeURL
 )
 
 type Post struct {
