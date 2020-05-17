@@ -50,7 +50,7 @@ func HandleCalman(message service.Message, providedService service.Service, cach
 		}
 	}
 	isEscaped := (index >= 2 && message.Text()[index-2] == '\\')
-	if len(message.Text()) < 1 || index < 1 || isEscaped {
+	if isEscaped {
 		if verboseLog {
 			fmt.Println("Usable name not found -- aborting!")
 		}
