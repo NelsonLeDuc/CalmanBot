@@ -11,6 +11,7 @@ type ProcessConfig interface {
 	SuperVerboseMode() bool
 	EnableDiscord() bool
 	EnableMinecraft() bool
+	Port() string
 }
 
 type configHolder struct {
@@ -18,6 +19,7 @@ type configHolder struct {
 	superVerbose bool
 	discord      bool
 	minecraft    bool
+	port         string
 }
 
 func (c configHolder) VerboseMode() bool {
@@ -36,6 +38,10 @@ func (c configHolder) EnableMinecraft() bool {
 	return c.minecraft
 }
 
+func (c configHolder) Port() string {
+	return c.port
+}
+
 var config *configHolder
 
 func Configuration() ProcessConfig {
@@ -50,7 +56,12 @@ func Configuration() ProcessConfig {
 		superVerboseMode := *superVerboseModeFlag || logLevel == "debug"
 		verboseMode := *verboseModeFlag || superVerboseMode || logLevel == "info"
 
-		config = &configHolder{verboseMode, superVerboseMode, discord, enableMinecraft}
+		port := os.Getenv("PORT")
+		if port == "" {
+			port = "4000"
+		}
+
+		config = &configHolder{verboseMode, superVerboseMode, discord, enableMinecraft, port}
 
 		if superVerboseMode {
 			fmt.Print("!!!! SUPER Verbose Logging enabled !!!!\n\n")

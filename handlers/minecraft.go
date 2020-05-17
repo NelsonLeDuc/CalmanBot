@@ -66,16 +66,21 @@ func MonitorMinecraft() {
 				currentState := err == nil
 				fmt.Printf("[MC] Minecraft server status for %s: %v %v\n", address, status.Version, err)
 				identifierString := name
-				if name == nil || len(*name) == 0 {
-					identifierString = &address
+				addressStr := address
+				if strings.Contains(address, ":25565") {
+					addressStr = strings.ReplaceAll(address, ":25565", "")
 				}
+				if name == nil || len(*name) == 0 {
+					identifierString = &addressStr
+				}
+
 				if prevState != nil && *prevState != currentState {
 					statusText := *identifierString + " is now offline!"
 					if currentState {
 						statusText = *identifierString + " is now online!"
 					}
 					post := service.Post{"", statusText, service.PostTypeText, 0}
-					service.FanoutTrigger("address", post)
+					service.FanoutTrigger(address, post)
 				}
 				prevState = &currentState
 			}
@@ -125,13 +130,11 @@ func HandleTrackMinecraft(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if len(name) > 0 {
-		queryStr := "INSERT INTO minecraft_servers(address, name) VALUES($1, $2) ON CONFLICT DO UPDATE"
-		s, e := config.DB().Exec(queryStr, query, name)
-		fmt.Printf("%v %v \n", s, e)
+		queryStr := "INSERT INTO minecraft_servers(address, name) VALUES($1, $2) ON CONFLICT (address) DO UPDATE SET name = $2"
+		config.DB().Exec(queryStr, query, name)
 	} else {
 		queryStr := "INSERT INTO minecraft_servers(address, name) VALUES($1, NULL) ON CONFLICT DO NOTHING"
-		s, e := config.DB().Exec(queryStr, query)
-		fmt.Printf("n %v %v \n", s, e)
+		config.DB().Exec(queryStr, query)
 	}
 	go MonitorMinecraft()
 }
