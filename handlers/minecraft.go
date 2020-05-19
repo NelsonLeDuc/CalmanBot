@@ -60,6 +60,14 @@ func init() {
 	trackedServers = make(map[string]bool)
 }
 
+func minecraftState(address string, tickInterval time.Duration) (mcping.PingResponse, bool) {
+	status, err := mcping.Ping(address)
+	if config.Configuration().SuperVerboseMode() {
+		fmt.Printf("[MC: %v] Minecraft server status for %s: %v %v err: %v\n", tickInterval, address, status.Version, status.Online, err)
+	}
+	return status, err == nil
+}
+
 func MonitorMinecraft() {
 	for _, server := range storedAddresses() {
 		if trackedServers[server.Address] {
@@ -68,33 +76,35 @@ func MonitorMinecraft() {
 		trackedServers[server.Address] = true
 		address := server.Address
 		name := server.Name
+		identifierString := name
+		addressStr := address
+		if strings.Contains(address, ":25565") {
+			addressStr = strings.ReplaceAll(address, ":25565", "")
+		}
+		if name == nil || len(*name) == 0 {
+			identifierString = &addressStr
+		}
 		go func() {
 			var prevState *bool
 			tickInterval := monitorIntervalSeconds()
 			fmt.Printf("[MC: %v] Monitoring Minecraft server status for %s\n", tickInterval, address)
 			for ; true; <-time.Tick(tickInterval) {
-				status, err := mcping.Ping(address)
-				currentState := err == nil
+				status, currentState := minecraftState(address, tickInterval)
 				if config.Configuration().SuperVerboseMode() {
-					fmt.Printf("[MC: %v] Minecraft server status for %s: %v %v err: %v\n", tickInterval, address, status.Version, status.Online, err)
-				}
-				identifierString := name
-				addressStr := address
-				if strings.Contains(address, ":25565") {
-					addressStr = strings.ReplaceAll(address, ":25565", "")
-				}
-				if name == nil || len(*name) == 0 {
-					identifierString = &addressStr
+					fmt.Printf("[MC: %v] Minecraft server status for %s: %v %v\n", tickInterval, address, status.Version, status.Online)
 				}
 
 				if prevState != nil && *prevState != currentState {
-					statusText := *identifierString + " is now offline!"
-					if currentState {
-						statusText = *identifierString + " is now online!"
+					status, currentState = minecraftState(address, tickInterval)
+					if prevState != nil && *prevState != currentState {
+						statusText := *identifierString + " is now offline!"
+						if currentState {
+							statusText = *identifierString + " is now online!"
+						}
+						fmt.Printf("[MC: %v] Changed status for Minecraft server status for %s: %v %v\n", tickInterval, address, status.Version, status.Online)
+						post := service.Post{"", statusText, statusText, service.PostTypeText, 0}
+						service.FanoutTrigger(address, post)
 					}
-					fmt.Printf("[MC: %v] Changed status for Minecraft server status for %s: %v %v err: %v\n", tickInterval, address, status.Version, status.Online, err)
-					post := service.Post{"", statusText, statusText, service.PostTypeText, 0}
-					service.FanoutTrigger(address, post)
 				}
 				prevState = &currentState
 			}
