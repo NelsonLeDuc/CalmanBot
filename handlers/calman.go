@@ -307,6 +307,10 @@ func updatedPostText(a models.Action, text string) string {
 		return text
 	}
 
+	if len(text) == 0 && a.IsURLPostType() {
+		return text
+	}
+
 	var updated string
 	if strings.Contains(*a.PostText, "{_text_}") {
 		updated = strings.Replace(*a.PostText, "{_text_}", text, -1)
