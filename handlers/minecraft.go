@@ -14,9 +14,18 @@ import (
 	"github.com/whatupdave/mcping"
 )
 
+const defaultMonitorIntervalMinutes = time.Duration(2)
+
 type minecraftServer struct {
 	Address string  `sql:"address"`
 	Name    *string `sql:"name"`
+}
+
+func monitorIntervalMinutes() time.Duration {
+	if configValue := config.Configuration().MonitorIntervalMinutes(); configValue > 0 {
+		return time.Duration(configValue)
+	}
+	return defaultMonitorIntervalMinutes
 }
 
 func storedAddresses() []minecraftServer {
@@ -61,10 +70,11 @@ func MonitorMinecraft() {
 		name := server.Name
 		go func() {
 			var prevState *bool
-			for ; true; <-time.Tick(time.Duration(15) * time.Minute) {
+			tickInterval := monitorIntervalMinutes()
+			for ; true; <-time.Tick(tickInterval * time.Minute) {
 				status, err := mcping.Ping(address)
 				currentState := err == nil
-				fmt.Printf("[MC] Minecraft server status for %s: %v %v\n", address, status.Version, err)
+				fmt.Printf("[MC: %vm] Minecraft server status for %s: %v %v err: %v\n", tickInterval, address, status.Version, status.Online, err)
 				identifierString := name
 				addressStr := address
 				if strings.Contains(address, ":25565") {
