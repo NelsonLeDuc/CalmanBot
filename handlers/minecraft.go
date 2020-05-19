@@ -14,18 +14,18 @@ import (
 	"github.com/whatupdave/mcping"
 )
 
-const defaultMonitorIntervalMinutes = time.Duration(2)
+const defaultMonitorInterval = time.Duration(20) * time.Second
 
 type minecraftServer struct {
 	Address string  `sql:"address"`
 	Name    *string `sql:"name"`
 }
 
-func monitorIntervalMinutes() time.Duration {
-	if configValue := config.Configuration().MonitorIntervalMinutes(); configValue > 0 {
-		return time.Duration(configValue)
+func monitorIntervalSeconds() time.Duration {
+	if configValue := config.Configuration().MonitorIntervalSeconds(); configValue > 0 {
+		return time.Duration(configValue) * time.Second
 	}
-	return defaultMonitorIntervalMinutes
+	return defaultMonitorInterval
 }
 
 func storedAddresses() []minecraftServer {
@@ -70,11 +70,14 @@ func MonitorMinecraft() {
 		name := server.Name
 		go func() {
 			var prevState *bool
-			tickInterval := monitorIntervalMinutes()
-			for ; true; <-time.Tick(tickInterval * time.Minute) {
+			tickInterval := monitorIntervalSeconds()
+			fmt.Printf("[MC: %v] Monitoring Minecraft server status for %s\n", tickInterval, address)
+			for ; true; <-time.Tick(tickInterval) {
 				status, err := mcping.Ping(address)
 				currentState := err == nil
-				fmt.Printf("[MC: %vm] Minecraft server status for %s: %v %v err: %v\n", tickInterval, address, status.Version, status.Online, err)
+				if config.Configuration().SuperVerboseMode() {
+					fmt.Printf("[MC: %v] Minecraft server status for %s: %v %v err: %v\n", tickInterval, address, status.Version, status.Online, err)
+				}
 				identifierString := name
 				addressStr := address
 				if strings.Contains(address, ":25565") {
@@ -89,6 +92,7 @@ func MonitorMinecraft() {
 					if currentState {
 						statusText = *identifierString + " is now online!"
 					}
+					fmt.Printf("[MC: %v] Changed status for Minecraft server status for %s: %v %v err: %v\n", tickInterval, address, status.Version, status.Online, err)
 					post := service.Post{"", statusText, statusText, service.PostTypeText, 0}
 					service.FanoutTrigger(address, post)
 				}
