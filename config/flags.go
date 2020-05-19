@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"strconv"
 )
 
 type ProcessConfig interface {
@@ -12,14 +13,16 @@ type ProcessConfig interface {
 	EnableDiscord() bool
 	EnableMinecraft() bool
 	Port() string
+	MonitorIntervalMinutes() int
 }
 
 type configHolder struct {
-	verbose      bool
-	superVerbose bool
-	discord      bool
-	minecraft    bool
-	port         string
+	verbose                bool
+	superVerbose           bool
+	discord                bool
+	minecraft              bool
+	port                   string
+	monitorIntervalMinutes int
 }
 
 func (c configHolder) VerboseMode() bool {
@@ -42,6 +45,10 @@ func (c configHolder) Port() string {
 	return c.port
 }
 
+func (c configHolder) MonitorIntervalMinutes() int {
+	return c.monitorIntervalMinutes
+}
+
 var config *configHolder
 
 func Configuration() ProcessConfig {
@@ -61,7 +68,15 @@ func Configuration() ProcessConfig {
 			port = "4000"
 		}
 
-		config = &configHolder{verboseMode, superVerboseMode, discord, enableMinecraft, port}
+		monitorIntervalEnv := os.Getenv("monitor_interval")
+		monitorInterval := 0
+		if len(monitorIntervalEnv) > 0 {
+			if toInt, err := strconv.Atoi(monitorIntervalEnv); err == nil {
+				monitorInterval = toInt
+			}
+		}
+
+		config = &configHolder{verboseMode, superVerboseMode, discord, enableMinecraft, port, monitorInterval}
 
 		if superVerboseMode {
 			fmt.Print("!!!! SUPER Verbose Logging enabled !!!!\n\n")
