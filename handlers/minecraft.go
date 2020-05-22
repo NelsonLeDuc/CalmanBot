@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -62,9 +63,6 @@ func init() {
 
 func minecraftState(address string, tickInterval time.Duration) (mcping.PingResponse, bool) {
 	status, err := mcping.Ping(address)
-	if config.Configuration().SuperVerboseMode() {
-		fmt.Printf("[MC: %v] Minecraft server status for %s: %v %v err: %v\n", tickInterval, address, status.Version, status.Online, err)
-	}
 	return status, err == nil
 }
 
@@ -85,28 +83,31 @@ func MonitorMinecraft() {
 			identifierString = &addressStr
 		}
 		go func() {
-			var prevState *bool
+			var trackedState *bool
 			tickInterval := monitorIntervalSeconds()
 			fmt.Printf("[MC: %v] Monitoring Minecraft server status for %s\n", tickInterval, address)
+			stateStack := NewStateStack(10)
 			for ; true; <-time.Tick(tickInterval) {
 				status, currentState := minecraftState(address, tickInterval)
+				stateStack.PushState(currentState)
 				if config.Configuration().SuperVerboseMode() {
-					fmt.Printf("[MC: %v] Minecraft server status for %s: %v %v\n", tickInterval, address, status.Version, status.Online)
+					fmt.Printf("[MC: %v] Minecraft server status for %s: %v %v  %+v\n", tickInterval, address, status.Version, status.Online, stateStack)
 				}
 
-				if prevState != nil && *prevState != currentState {
-					status, currentState = minecraftState(address, tickInterval)
-					if prevState != nil && *prevState != currentState {
+				if trackedState == nil {
+					trackedState = &currentState
+				} else if currentState != *trackedState {
+					if stateStack.LastNStatesMatch(2, currentState) {
+						trackedState = &currentState
 						statusText := *identifierString + " is now offline!"
 						if currentState {
 							statusText = *identifierString + " is now online!"
 						}
-						fmt.Printf("[MC: %v] Changed status for Minecraft server status for %s: %v %v\n", tickInterval, address, status.Version, status.Online)
+						fmt.Printf("[MC: %v] Changed status for Minecraft server status for %s: %v %v %+v\n", tickInterval, address, status.Version, status.Online, stateStack)
 						post := service.Post{"", statusText, statusText, service.PostTypeText, 0}
 						service.FanoutTrigger(address, post)
 					}
 				}
-				prevState = &currentState
 			}
 		}()
 	}
@@ -161,4 +162,47 @@ func HandleTrackMinecraft(w http.ResponseWriter, r *http.Request) {
 		config.DB().Exec(queryStr, query)
 	}
 	go MonitorMinecraft()
+}
+
+type stateStack struct {
+	capacity int
+	history  []bool
+}
+
+func NewStateStack(capacity int) stateStack {
+	return stateStack{capacity: capacity, history: []bool{}}
+}
+
+func (s *stateStack) PushState(state bool) {
+	s.history = append(s.history, state)
+	if len(s.history) > s.capacity {
+		s.history = s.history[1:]
+	}
+}
+
+func (s stateStack) Len() int {
+	return len(s.history)
+}
+
+func (s stateStack) Capacity() int {
+	return s.capacity
+}
+
+func (s stateStack) LastState() (bool, error) {
+	if len(s.history) == 0 {
+		return false, errors.New("Stack is empty")
+	}
+	return s.history[len(s.history)-1], nil
+}
+
+func (s stateStack) LastNStatesMatch(n int, state bool) bool {
+	if len(s.history) < n {
+		return false
+	}
+	for i := len(s.history) - 1; i >= len(s.history)-n; i-- {
+		if s.history[i] != state {
+			return false
+		}
+	}
+	return true
 }
