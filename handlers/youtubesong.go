@@ -42,10 +42,17 @@ func HandleYoutubeLinkt(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	pageURL := stuff["pageUrl"].(string)
-	entities := stuff["entitiesByUniqueId"].(map[string]interface{})
-	if len(entities) <= 2 {
+	links := stuff["linksByPlatform"].(map[string]interface{})
+	if len(links) <= 2 {
 		return
 	}
+	hasSpotify := links["spotify"] != nil
+	hasAppleMusic := links["appleMusic"] != nil
+
+	if !hasAppleMusic || !hasSpotify {
+		return
+	}
+
 	outputData := map[string]string{
 		"pageUrl": pageURL,
 	}

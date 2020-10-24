@@ -13,7 +13,7 @@ type ProcessConfig interface {
 	EnableDiscord() bool
 	EnableMinecraft() bool
 	Port() string
-	MonitorIntervalMinutes() int
+	MonitorIntervalSeconds() int
 }
 
 type configHolder struct {
@@ -22,7 +22,7 @@ type configHolder struct {
 	discord                bool
 	minecraft              bool
 	port                   string
-	monitorIntervalMinutes int
+	monitorIntervalSeconds int
 }
 
 func (c configHolder) VerboseMode() bool {
@@ -45,8 +45,8 @@ func (c configHolder) Port() string {
 	return c.port
 }
 
-func (c configHolder) MonitorIntervalMinutes() int {
-	return c.monitorIntervalMinutes
+func (c configHolder) MonitorIntervalSeconds() int {
+	return c.monitorIntervalSeconds
 }
 
 var config *configHolder
