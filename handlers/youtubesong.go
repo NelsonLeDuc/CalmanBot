@@ -89,6 +89,10 @@ func HandleSpotifyRedirect(w http.ResponseWriter, r *http.Request) {
 }
 
 func processSpotify(groupID string, spotifyID string, groupName string) {
+	if !config.Configuration().EnableSpotify() {
+		return
+	}
+
 	hasTrigger := service.TriggerExists("spotifyPlaylist", groupID)
 	if !hasTrigger {
 		return
@@ -99,6 +103,14 @@ func processSpotify(groupID string, spotifyID string, groupName string) {
 }
 
 func HandlePlaylistRequest(w http.ResponseWriter, r *http.Request) {
+	if !config.Configuration().EnableSpotify() {
+		outputData := map[string]string{
+			"output": "This feature is not enabled!",
+		}
+		json, _ := json.Marshal(outputData)
+		w.Write(json)
+	}
+
 	groupID := r.URL.Query().Get("groupid")
 	if groupID == "" {
 		return
