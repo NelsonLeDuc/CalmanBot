@@ -29,7 +29,11 @@ func (a Action) IsURLType() bool {
 }
 
 func (a Action) IsTriggerType() bool {
-	return strings.Contains(a.ContentType, "TRIGGER")
+	return strings.Contains(a.ContentType, "TRIGGER") || strings.Contains(a.ContentType, "TRIGGERGUILD")
+}
+
+func (a Action) IsGuildTriggerType() bool {
+	return strings.Contains(a.ContentType, "TRIGGERGUILD")
 }
 
 func (a Action) IsImageType() bool {

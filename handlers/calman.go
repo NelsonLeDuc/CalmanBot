@@ -34,7 +34,7 @@ func HandleCalman(message service.Message, providedService service.Service, cach
 		return
 	}
 
-	bot, _ := repo.FetchBot(message.GroupID())
+	bot, _ := repo.FetchBot(message.BotGroupID())
 
 	if verboseLog {
 		fmt.Printf("Fetched bot %#v\n", bot)
@@ -169,7 +169,7 @@ Exit:
 		if verboseMode {
 			fmt.Printf("                 Start: \"%v\"\n", act.Content)
 		}
-		updateAction(&act, sMatch)
+		updateAction(&act, sMatch, message)
 		if verboseMode {
 			fmt.Printf("                Update: \"%v\"\n", act.Content)
 		}
@@ -212,17 +212,29 @@ func handleTriggerAction(action models.Action, triggerHandler service.TriggerWra
 		triggerName = matched[1]
 	}
 
+	forGuild := action.IsGuildTriggerType()
+	verboseMode := config.Configuration().VerboseMode()
+
 	if enableAction {
-		triggerHandler.EnableTrigger(triggerName, message)
+		if verboseMode {
+			fmt.Printf("   EnableTrigger \"%v\" forGuild: %v\n", triggerName, forGuild)
+		}
+		triggerHandler.EnableTrigger(triggerName, message, forGuild)
 		return "Enabled", nil
 	} else if statusAction {
-		if triggerHandler.IsTriggerConfigured(triggerName, message) {
+		if verboseMode {
+			fmt.Printf("   IsTriggerConfigured \"%v\" forGuild: %v\n", triggerName, forGuild)
+		}
+		if triggerHandler.IsTriggerConfigured(triggerName, message, forGuild) {
 			return "Enabled", nil
 		}
 		return "Disabled", nil
 	}
 
-	triggerHandler.DisableTrigger(triggerName, message)
+	if verboseMode {
+		fmt.Printf("   DisableTrigger \"%v\" forGuild: %v\n", triggerName, forGuild)
+	}
+	triggerHandler.DisableTrigger(triggerName, message, forGuild)
 	return "Disabled", nil
 }
 
@@ -288,11 +300,13 @@ func handleURLAction(a models.Action, triggerHandler service.TriggerWrangler, b 
 	return "", errors.New("Failed to handle URL action")
 }
 
-func updateAction(a *models.Action, text string) {
+func updateAction(a *models.Action, text string, message service.Message) {
 	text = url.QueryEscape(text)
 
 	a.Content = strings.Replace(a.Content, "{_text_}", text, -1)
 	a.Content = strings.Replace(a.Content, "{_me_}", "localhost:"+config.Configuration().Port(), -1)
+	a.Content = strings.Replace(a.Content, "{_groupid_}", url.QueryEscape(message.GroupID()), -1)
+	a.Content = strings.Replace(a.Content, "{_groupname_}", url.QueryEscape(message.GroupName()), -1)
 
 	r, _ := regexp.Compile("(?i){_key\\((.+)\\)_}")
 	matched := r.FindStringSubmatch(a.Content)

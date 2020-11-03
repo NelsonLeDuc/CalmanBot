@@ -52,4 +52,16 @@ var routes = Routes{
 		"/youtubeSong",
 		handlers.HandleYoutubeLinkt,
 	},
+	Route{
+		"SpotifyAuth",
+		"GET",
+		"/spotifyRedirect",
+		handlers.HandleSpotifyRedirect,
+	},
+	Route{
+		"Playlist",
+		"GET",
+		"/playlistGet",
+		handlers.HandlePlaylistRequest,
+	},
 }

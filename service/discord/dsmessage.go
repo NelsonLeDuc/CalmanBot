@@ -12,7 +12,19 @@ type dsMessage struct {
 }
 
 func (d dsMessage) GroupID() string {
+	return d.GuildID
+}
+
+func (d dsMessage) BotGroupID() string {
 	return "discord"
+}
+
+func (d dsMessage) GroupName() string {
+	g, err := d.session.Guild(d.GuildID)
+	if err != nil {
+		return ""
+	}
+	return g.Name
 }
 
 func (d dsMessage) UserName() string {

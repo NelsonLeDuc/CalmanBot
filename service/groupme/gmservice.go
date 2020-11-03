@@ -58,7 +58,7 @@ func (g GMService) Post(post service.Post, groupMessage service.Message) { //Pos
 			postToGroupMe(encoded, idx)
 			mID, err := messageID(groupMessage)
 			if err == nil {
-				cachePost(post.CacheID, mID, groupMessage.GroupID())
+				cachePost(post.CacheID, mID, groupMessage.BotGroupID())
 			}
 		}(post.Key, subText)
 		idx++
@@ -127,7 +127,7 @@ type gmMessageWrapper struct {
 func messageID(message service.Message) (string, error) {
 	time.Sleep(messagePollDelayMilliseconds * time.Millisecond)
 	token := os.Getenv("groupMeID")
-	getURL := "https://api.groupme.com/v3/groups/" + message.GroupID() + "/messages?token=" + token + "&after_id=" + message.MessageID()
+	getURL := "https://api.groupme.com/v3/groups/" + message.BotGroupID() + "/messages?token=" + token + "&after_id=" + message.MessageID()
 	resp, _ := http.Get(getURL)
 
 	body, _ := ioutil.ReadAll(resp.Body)
