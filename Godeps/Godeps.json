@@ -41,6 +41,10 @@
 			"Rev": "45b6a3b38c1415180d991c6a00ccc95abfa5df84"
 		},
 		{
+			"ImportPath": "github.com/zmb3/spotify",
+			"Rev": "9bec46940cc04f095544e94c0cbc79e7772fd61d"
+		},
+		{
 			"ImportPath": "golang.org/x/crypto/nacl/secretbox",
 			"Rev": "94eea52f7b742c7cbe0b03b22f0c4c8631ece122"
 		},
@@ -53,12 +57,28 @@
 			"Rev": "94eea52f7b742c7cbe0b03b22f0c4c8631ece122"
 		},
 		{
+			"ImportPath": "golang.org/x/net/context",
+			"Rev": "a8b9294777976932365dabb6640cf1468d95c70f"
+		},
+		{
+			"ImportPath": "golang.org/x/net/context/ctxhttp",
+			"Rev": "a8b9294777976932365dabb6640cf1468d95c70f"
+		},
+		{
 			"ImportPath": "golang.org/x/net/html",
 			"Rev": "a8b9294777976932365dabb6640cf1468d95c70f"
 		},
 		{
 			"ImportPath": "golang.org/x/net/html/atom",
 			"Rev": "a8b9294777976932365dabb6640cf1468d95c70f"
+		},
+		{
+			"ImportPath": "golang.org/x/oauth2",
+			"Rev": "5d25da1a8d43b66f2898c444f899c7bcfd6a407e"
+		},
+		{
+			"ImportPath": "golang.org/x/oauth2/internal",
+			"Rev": "5d25da1a8d43b66f2898c444f899c7bcfd6a407e"
 		}
 	]
 }

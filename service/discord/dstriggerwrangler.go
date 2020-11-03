@@ -21,32 +21,35 @@ func (d dsService) ServiceTriggerWrangler() (service.TriggerWrangler, error) {
 	return triggerWrangler{d}, nil
 }
 
-func (t triggerWrangler) EnableTrigger(id string, groupMessage service.Message) {
+func (t triggerWrangler) EnableTrigger(id string, groupMessage service.Message, forGuild bool) {
 	discordMessage := groupMessage.(dsMessage)
 
 	queryStr := "INSERT INTO discord_triggers(channel_id, trigger_id) VALUES($1, $2) ON CONFLICT DO NOTHING"
-	config.DB().Exec(queryStr, discordMessage.ChannelID, id)
+	if forGuild {
+		config.DB().Exec(queryStr, discordMessage.GuildID, id)
+	} else {
+		config.DB().Exec(queryStr, discordMessage.ChannelID, id)
+	}
 }
 
-func (t triggerWrangler) DisableTrigger(id string, groupMessage service.Message) {
+func (t triggerWrangler) DisableTrigger(id string, groupMessage service.Message, forGuild bool) {
 	discordMessage := groupMessage.(dsMessage)
 
 	queryStr := "DELETE FROM discord_triggers WHERE channel_id = $1 AND trigger_id = $2"
-	config.DB().Exec(queryStr, discordMessage.ChannelID, id)
+	if forGuild {
+		config.DB().Exec(queryStr, discordMessage.GuildID, id)
+	} else {
+		config.DB().Exec(queryStr, discordMessage.ChannelID, id)
+	}
 }
 
-func (t triggerWrangler) IsTriggerConfigured(id string, groupMessage service.Message) bool {
+func (t triggerWrangler) IsTriggerConfigured(id string, groupMessage service.Message, forGuild bool) bool {
 	discordMessage := groupMessage.(dsMessage)
-
-	queryStr := "SELECT count(*) FROM discord_triggers WHERE channel_id = $1 AND trigger_id = $2"
-	row := config.DB().QueryRow(queryStr, discordMessage.ChannelID, id)
-	var count int
-	err := row.Scan(&count)
-	if err != nil {
-		return false
+	if forGuild {
+		return t.HasTrigger(id, discordMessage.GuildID)
 	}
 
-	return count > 0
+	return t.HasTrigger(id, discordMessage.ChannelID)
 }
 
 func (t triggerWrangler) HandleTrigger(id string, post service.Post) {
@@ -71,4 +74,16 @@ func (t triggerWrangler) HandleTrigger(id string, post service.Post) {
 		}
 		t.service.postToChannel(post, trigger.ChannelID)
 	}
+}
+
+func (t triggerWrangler) HasTrigger(id string, groupID string) bool {
+	queryStr := "SELECT count(*) FROM discord_triggers WHERE channel_id = $1 AND trigger_id = $2"
+	row := config.DB().QueryRow(queryStr, groupID, id)
+	var count int
+	err := row.Scan(&count)
+	if err != nil {
+		return false
+	}
+
+	return count > 0
 }

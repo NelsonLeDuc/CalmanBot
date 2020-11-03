@@ -25,6 +25,10 @@ func main() {
 		go handlers.MonitorMinecraft()
 	}
 
+	if config.Configuration().EnableSpotify() {
+		go handlers.SetupSpotify()
+	}
+
 	log.Fatal(http.ListenAndServe(GetPort(), router))
 }
 

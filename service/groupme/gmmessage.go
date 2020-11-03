@@ -12,8 +12,16 @@ type gmMessage struct {
 	FavoritedBy []string `json:"favorited_by"`
 }
 
+func (m gmMessage) BotGroupID() string {
+	return m.GID
+}
+
 func (m gmMessage) GroupID() string {
 	return m.GID
+}
+
+func (g gmMessage) GroupName() string {
+	return ""
 }
 
 func (m gmMessage) UserName() string {
