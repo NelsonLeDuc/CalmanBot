@@ -150,12 +150,14 @@ func HandleYoutubeLinkt(w http.ResponseWriter, r *http.Request) {
 	client := &http.Client{}
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
+		fmt.Printf("songlink request error: %v\n", err)
 		return
 	}
 
 	req.Header.Set("User-Agent", "CalmanBot/2.5.3")
 	resp, err := client.Do(req)
 	if err != nil {
+		fmt.Printf("songlink error: %v\n", err)
 		return
 	}
 	defer resp.Body.Close()
@@ -171,12 +173,14 @@ func HandleYoutubeLinkt(w http.ResponseWriter, r *http.Request) {
 
 	err = json.Unmarshal(content, &stuff)
 	if err != nil {
+		fmt.Printf("songlink json error: %v\n", err)
 		return
 	}
 
 	pageURL := stuff["pageUrl"].(string)
 	links := stuff["linksByPlatform"].(map[string]interface{})
 	if len(links) <= 2 {
+		fmt.Printf("songlink sub 2 platforms error: %v\n", err)
 		return
 	}
 
@@ -184,14 +188,15 @@ func HandleYoutubeLinkt(w http.ResponseWriter, r *http.Request) {
 	hasSpotify := spotifyLinkPayload != nil
 	hasAppleMusic := links["appleMusic"] != nil
 
-	if !hasAppleMusic || !hasSpotify {
-		return
-	}
-
 	spotifyEntityID := (spotifyLinkPayload["entityUniqueId"].(string))[14:]
 
-	if len(groupID) > 0 {
+	if len(groupID) > 0 && hasSpotify {
 		go processSpotify(groupID, spotifyEntityID, groupName)
+	}
+
+	if !hasAppleMusic || !hasSpotify {
+		fmt.Printf("songlink missing playform apple: %v spotify: %v\n", hasAppleMusic, hasSpotify)
+		return
 	}
 
 	outputData := map[string]string{
