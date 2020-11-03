@@ -28,8 +28,8 @@ type spotifyPlaylist struct {
 }
 
 func playlistForGroup(groupID, groupName string, create bool) *spotifyPlaylist {
-	queryStr := fmt.Sprintf("SELECT %s FROM spotify_playlists LIMIT 1", sqlstruct.Columns(spotifyPlaylist{}))
-	rows, err := config.DB().Query(queryStr)
+	queryStr := fmt.Sprintf("SELECT %s FROM spotify_playlists WHERE group_id = $1 LIMIT 1", sqlstruct.Columns(spotifyPlaylist{}))
+	rows, err := config.DB().Query(queryStr, groupID)
 	if err != nil {
 		return nil
 	}
