@@ -188,15 +188,15 @@ func HandleYoutubeLinkt(w http.ResponseWriter, r *http.Request) {
 	hasSpotify := spotifyLinkPayload != nil
 	hasAppleMusic := links["appleMusic"] != nil
 
+	spotifyEntityID := (spotifyLinkPayload["entityUniqueId"].(string))[14:]
+
+	if len(groupID) > 0 && hasSpotify {
+		go processSpotify(groupID, spotifyEntityID, groupName)
+	}
+
 	if !hasAppleMusic || !hasSpotify {
 		fmt.Printf("songlink missing playform apple: %v spotify: %v\n", hasAppleMusic, hasSpotify)
 		return
-	}
-
-	spotifyEntityID := (spotifyLinkPayload["entityUniqueId"].(string))[14:]
-
-	if len(groupID) > 0 {
-		go processSpotify(groupID, spotifyEntityID, groupName)
 	}
 
 	outputData := map[string]string{
