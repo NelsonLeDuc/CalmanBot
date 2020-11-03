@@ -212,29 +212,28 @@ func handleTriggerAction(action models.Action, triggerHandler service.TriggerWra
 		triggerName = matched[1]
 	}
 
-	forGuild := action.IsGuildTriggerType()
 	verboseMode := config.Configuration().VerboseMode()
 
 	if enableAction {
 		if verboseMode {
-			fmt.Printf("   EnableTrigger \"%v\" forGuild: %v\n", triggerName, forGuild)
+			fmt.Printf("   EnableTrigger \"%v\"\n", triggerName)
 		}
-		triggerHandler.EnableTrigger(triggerName, message, forGuild)
+		triggerHandler.EnableTrigger(triggerName, message)
 		return "Enabled", nil
 	} else if statusAction {
 		if verboseMode {
-			fmt.Printf("   IsTriggerConfigured \"%v\" forGuild: %v\n", triggerName, forGuild)
+			fmt.Printf("   IsTriggerConfigured \"%v\"\n", triggerName)
 		}
-		if triggerHandler.IsTriggerConfigured(triggerName, message, forGuild) {
+		if triggerHandler.IsTriggerConfiguredForGroup(triggerName, message) {
 			return "Enabled", nil
 		}
 		return "Disabled", nil
 	}
 
 	if verboseMode {
-		fmt.Printf("   DisableTrigger \"%v\" forGuild: %v\n", triggerName, forGuild)
+		fmt.Printf("   DisableTrigger \"%v\"\n", triggerName)
 	}
-	triggerHandler.DisableTrigger(triggerName, message, forGuild)
+	triggerHandler.DisableTrigger(triggerName, message)
 	return "Disabled", nil
 }
 
@@ -306,6 +305,7 @@ func updateAction(a *models.Action, text string, message service.Message) {
 	a.Content = strings.Replace(a.Content, "{_text_}", text, -1)
 	a.Content = strings.Replace(a.Content, "{_me_}", "localhost:"+config.Configuration().Port(), -1)
 	a.Content = strings.Replace(a.Content, "{_groupid_}", url.QueryEscape(message.GroupID()), -1)
+	a.Content = strings.Replace(a.Content, "{_serverid_}", url.QueryEscape(message.ServerID()), -1)
 	a.Content = strings.Replace(a.Content, "{_groupname_}", url.QueryEscape(message.GroupName()), -1)
 
 	r, _ := regexp.Compile("(?i){_key\\((.+)\\)_}")

@@ -27,9 +27,9 @@ type spotifyPlaylist struct {
 	PlaylistID string `sql:"playlist_id"`
 }
 
-func playlistForGroup(groupID, groupName string, create bool) *spotifyPlaylist {
+func playlistForGroup(serverID, groupName string, create bool) *spotifyPlaylist {
 	queryStr := fmt.Sprintf("SELECT %s FROM spotify_playlists WHERE group_id = $1 LIMIT 1", sqlstruct.Columns(spotifyPlaylist{}))
-	rows, err := config.DB().Query(queryStr, groupID)
+	rows, err := config.DB().Query(queryStr, serverID)
 	if err != nil {
 		return nil
 	}
@@ -43,14 +43,14 @@ func playlistForGroup(groupID, groupName string, create bool) *spotifyPlaylist {
 		err = sqlstruct.Scan(&playlist, rows)
 	} else if create {
 		user, _ := client.CurrentUser()
-		name := groupID
+		name := serverID
 		if len(groupName) > 0 {
 			name = groupName
 		}
 		spotifyPlaylistCreated, _ := client.CreatePlaylistForUser(user.ID, name+" (CalmanBot)", "", false)
 		queryStr := "INSERT INTO spotify_playlists(group_id, playlist_id) VALUES($1, $2) ON CONFLICT DO NOTHING"
-		config.DB().Exec(queryStr, groupID, spotifyPlaylistCreated.ID.String())
-		playlist = spotifyPlaylist{groupID, spotifyPlaylistCreated.ID.String()}
+		config.DB().Exec(queryStr, serverID, spotifyPlaylistCreated.ID.String())
+		playlist = spotifyPlaylist{serverID, spotifyPlaylistCreated.ID.String()}
 	}
 
 	return &playlist
@@ -88,17 +88,17 @@ func HandleSpotifyRedirect(w http.ResponseWriter, r *http.Request) {
 	fmt.Printf("oauth token: \"%+v\"\n", output)
 }
 
-func processSpotify(groupID string, spotifyID string, groupName string) {
+func processSpotify(groupID, serverID, spotifyID string, groupName string) {
 	if !config.Configuration().EnableSpotify() {
 		return
 	}
 
-	hasTrigger := service.TriggerExists("spotifyPlaylist", groupID)
+	hasTrigger := service.TriggerExists("spotifyPlaylist", serverID, groupID)
 	if !hasTrigger {
 		return
 	}
 
-	playlist := playlistForGroup(groupID, groupName, true)
+	playlist := playlistForGroup(serverID, groupName, true)
 	client.AddTracksToPlaylist(spotify.ID(playlist.PlaylistID), spotify.ID(spotifyID))
 }
 
@@ -111,15 +111,15 @@ func HandlePlaylistRequest(w http.ResponseWriter, r *http.Request) {
 		w.Write(json)
 	}
 
-	groupID := r.URL.Query().Get("groupid")
-	if groupID == "" {
+	serverID := r.URL.Query().Get("serverid")
+	if serverID == "" {
 		return
 	}
 
 	groupName := r.URL.Query().Get("groupName")
 
-	hasTrigger := service.TriggerExists("spotifyPlaylist", groupID)
-	playlist := playlistForGroup(groupID, groupName, hasTrigger)
+	hasTrigger := service.TriggerExists("spotifyPlaylist", serverID, "")
+	playlist := playlistForGroup(serverID, groupName, hasTrigger)
 
 	var outputData map[string]string
 	if len(playlist.PlaylistID) > 0 {
@@ -144,6 +144,7 @@ func HandleYoutubeLinkt(w http.ResponseWriter, r *http.Request) {
 	}
 
 	groupID := r.URL.Query().Get("groupid")
+	serverID := r.URL.Query().Get("serverid")
 	groupName := r.URL.Query().Get("groupName")
 
 	url := "https://api.song.link/v1-alpha.1/links?url=" + url.QueryEscape(query)
@@ -189,9 +190,8 @@ func HandleYoutubeLinkt(w http.ResponseWriter, r *http.Request) {
 	hasAppleMusic := links["appleMusic"] != nil
 
 	spotifyEntityID := (spotifyLinkPayload["entityUniqueId"].(string))[14:]
-
 	if len(groupID) > 0 && hasSpotify {
-		go processSpotify(groupID, spotifyEntityID, groupName)
+		go processSpotify(groupID, serverID, spotifyEntityID, groupName)
 	}
 
 	if !hasAppleMusic || !hasSpotify {

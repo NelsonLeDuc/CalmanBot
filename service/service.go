@@ -28,6 +28,7 @@ type Service interface {
 type Message interface {
 	BotGroupID() string
 	GroupID() string
+	ServerID() string
 	GroupName() string
 	UserName() string
 	UserID() string
@@ -41,11 +42,12 @@ type Monitor interface {
 }
 
 type TriggerWrangler interface {
-	EnableTrigger(id string, groupMessage Message, forGuild bool)
-	DisableTrigger(id string, groupMessage Message, forGuild bool)
-	IsTriggerConfigured(id string, groupMessage Message, forGuild bool) bool
+	EnableTrigger(id string, groupMessage Message)
+	DisableTrigger(id string, groupMessage Message)
+	IsTriggerConfiguredForGroup(id string, groupMessage Message) bool
+	IsTriggerConfiguredForServer(id string, groupMessage Message) bool
 	HandleTrigger(id string, post Post)
-	HasTrigger(id string, groupID string) bool
+	HasTrigger(id, serverID, groupID string) bool
 }
 
 var registeredServices []TriggerWrangler
@@ -67,9 +69,9 @@ func FanoutTrigger(id string, post Post) {
 	}
 }
 
-func TriggerExists(id string, groupID string) bool {
+func TriggerExists(id, server, groupID string) bool {
 	for _, s := range registeredServices {
-		if s.HasTrigger(id, groupID) {
+		if s.HasTrigger(id, server, groupID) {
 			return true
 		}
 	}
