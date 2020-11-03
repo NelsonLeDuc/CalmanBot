@@ -28,8 +28,8 @@ type spotifyPlaylist struct {
 }
 
 func playlistForGroup(groupID, groupName string, create bool) *spotifyPlaylist {
-	queryStr := fmt.Sprintf("SELECT %s FROM spotify_playlists LIMIT 1", sqlstruct.Columns(spotifyPlaylist{}))
-	rows, err := config.DB().Query(queryStr)
+	queryStr := fmt.Sprintf("SELECT %s FROM spotify_playlists WHERE group_id = $1 LIMIT 1", sqlstruct.Columns(spotifyPlaylist{}))
+	rows, err := config.DB().Query(queryStr, groupID)
 	if err != nil {
 		return nil
 	}
@@ -89,6 +89,10 @@ func HandleSpotifyRedirect(w http.ResponseWriter, r *http.Request) {
 }
 
 func processSpotify(groupID string, spotifyID string, groupName string) {
+	if !config.Configuration().EnableSpotify() {
+		return
+	}
+
 	hasTrigger := service.TriggerExists("spotifyPlaylist", groupID)
 	if !hasTrigger {
 		return
@@ -99,6 +103,14 @@ func processSpotify(groupID string, spotifyID string, groupName string) {
 }
 
 func HandlePlaylistRequest(w http.ResponseWriter, r *http.Request) {
+	if !config.Configuration().EnableSpotify() {
+		outputData := map[string]string{
+			"output": "This feature is not enabled!",
+		}
+		json, _ := json.Marshal(outputData)
+		w.Write(json)
+	}
+
 	groupID := r.URL.Query().Get("groupid")
 	if groupID == "" {
 		return
@@ -138,12 +150,14 @@ func HandleYoutubeLinkt(w http.ResponseWriter, r *http.Request) {
 	client := &http.Client{}
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
+		fmt.Printf("songlink request error: %v\n", err)
 		return
 	}
 
 	req.Header.Set("User-Agent", "CalmanBot/2.5.3")
 	resp, err := client.Do(req)
 	if err != nil {
+		fmt.Printf("songlink error: %v\n", err)
 		return
 	}
 	defer resp.Body.Close()
@@ -159,12 +173,14 @@ func HandleYoutubeLinkt(w http.ResponseWriter, r *http.Request) {
 
 	err = json.Unmarshal(content, &stuff)
 	if err != nil {
+		fmt.Printf("songlink json error: %v\n", err)
 		return
 	}
 
 	pageURL := stuff["pageUrl"].(string)
 	links := stuff["linksByPlatform"].(map[string]interface{})
 	if len(links) <= 2 {
+		fmt.Printf("songlink sub 2 platforms error: %v\n", err)
 		return
 	}
 
@@ -172,14 +188,15 @@ func HandleYoutubeLinkt(w http.ResponseWriter, r *http.Request) {
 	hasSpotify := spotifyLinkPayload != nil
 	hasAppleMusic := links["appleMusic"] != nil
 
-	if !hasAppleMusic || !hasSpotify {
-		return
-	}
-
 	spotifyEntityID := (spotifyLinkPayload["entityUniqueId"].(string))[14:]
 
-	if len(groupID) > 0 {
+	if len(groupID) > 0 && hasSpotify {
 		go processSpotify(groupID, spotifyEntityID, groupName)
+	}
+
+	if !hasAppleMusic || !hasSpotify {
+		fmt.Printf("songlink missing playform apple: %v spotify: %v\n", hasAppleMusic, hasSpotify)
+		return
 	}
 
 	outputData := map[string]string{
