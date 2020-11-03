@@ -20,6 +20,10 @@ func (m gmMessage) GroupID() string {
 	return m.GID
 }
 
+func (m gmMessage) ServerID() string {
+	return ""
+}
+
 func (g gmMessage) GroupName() string {
 	return ""
 }

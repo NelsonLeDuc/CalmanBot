@@ -12,6 +12,10 @@ type dsMessage struct {
 }
 
 func (d dsMessage) GroupID() string {
+	return d.ChannelID
+}
+
+func (d dsMessage) ServerID() string {
 	return d.GuildID
 }
 
