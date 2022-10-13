@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"image/gif"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
 	"os"
@@ -109,15 +109,14 @@ func validLinksFromRoot(root RootSearch) []string {
 
 func googleQuery(url string) *RootSearch {
 	resp, err := http.Get(url)
-	defer resp.Body.Close()
-
 	if err != nil {
 		fmt.Println(err)
 		return nil
 	}
+	defer resp.Body.Close()
 
 	var root RootSearch
-	bodyBytes, _ := ioutil.ReadAll(resp.Body)
+	bodyBytes, _ := io.ReadAll(resp.Body)
 	err = json.Unmarshal(bodyBytes, &root)
 	if err != nil {
 		fmt.Println(err)
@@ -139,7 +138,7 @@ func isValidGIF(url string) bool {
 	}
 	defer resp.Body.Close()
 
-	bodyBytes, _ := ioutil.ReadAll(resp.Body)
+	bodyBytes, _ := io.ReadAll(resp.Body)
 	byteReader := bytes.NewReader(bodyBytes)
 
 	decode, err := gif.DecodeAll(byteReader)

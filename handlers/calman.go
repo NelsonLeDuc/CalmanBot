@@ -3,7 +3,7 @@ package handlers
 import (
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
 	"net/url"
@@ -86,7 +86,7 @@ func HandleCalman(message service.Message, providedService service.Service, cach
 		fmt.Printf("Action: %v\n", act.Content)
 		fmt.Printf("Type: %v\n", postType)
 		fmt.Printf("Posting: %v\n\n", postString)
-		providedService.Post(service.Post{bot.Key, postString, rawPostString, postType, cacheID}, message)
+		providedService.Post(service.Post{Key: bot.Key, Text: postString, RawText: rawPostString, Type: postType, CacheID: cacheID}, message)
 	} else if verboseLog {
 		fmt.Print("Empty post string -- aborting!\n\n")
 	}
@@ -202,11 +202,11 @@ func handleTriggerAction(action models.Action, triggerHandler service.TriggerWra
 	disableAction := strings.HasSuffix(action.ContentType, "DISABLE")
 	statusAction := strings.HasSuffix(action.ContentType, "STATUS")
 	if !enableAction && !disableAction && !statusAction {
-		return "", errors.New("Invalid trigger type")
+		return "", errors.New("invalid trigger type")
 	}
 
 	triggerName := action.Content
-	r, _ := regexp.Compile("(?i){_trigger\\(([^\\)]+)\\)_}")
+	r, _ := regexp.Compile(`(?i){_trigger\(([^\)]+)\)_}`)
 	matched := r.FindStringSubmatch(action.Content)
 	if len(matched) >= 2 {
 		triggerName = matched[1]
@@ -239,7 +239,7 @@ func handleTriggerAction(action models.Action, triggerHandler service.TriggerWra
 
 func handleURLAction(a models.Action, triggerHandler service.TriggerWrangler, b models.Bot, message service.Message) (string, error) {
 	url := a.Content
-	r, _ := regexp.Compile("(?i){_url\\(([^\\)]+)\\)_}")
+	r, _ := regexp.Compile(`(?i){_url\(([^\)]+)\)_}`)
 	matched := r.FindStringSubmatch(a.Content)
 	if len(matched) >= 2 {
 		url = matched[1]
@@ -265,11 +265,11 @@ func handleURLAction(a models.Action, triggerHandler service.TriggerWrangler, b 
 	}
 	defer resp.Body.Close()
 
-	content, _ := ioutil.ReadAll(resp.Body)
+	content, _ := io.ReadAll(resp.Body)
 
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		log.Printf("Bad Response: %d length: %d", resp.StatusCode, len(content))
-		return "", errors.New("Bad response from server")
+		return "", errors.New("bad response from server")
 	}
 
 	if verboseMode {
@@ -296,7 +296,7 @@ func handleURLAction(a models.Action, triggerHandler service.TriggerWrangler, b 
 		}
 	}
 
-	return "", errors.New("Failed to handle URL action")
+	return "", errors.New("failed to handle URL action")
 }
 
 func updateAction(a *models.Action, text string, message service.Message) {
@@ -308,7 +308,7 @@ func updateAction(a *models.Action, text string, message service.Message) {
 	a.Content = strings.Replace(a.Content, "{_serverid_}", url.QueryEscape(message.ServerID()), -1)
 	a.Content = strings.Replace(a.Content, "{_groupname_}", url.QueryEscape(message.GroupName()), -1)
 
-	r, _ := regexp.Compile("(?i){_key\\((.+)\\)_}")
+	r, _ := regexp.Compile(`(?i){_key\((.+)\)_}`)
 	matched := r.FindStringSubmatch(a.Content)
 	if len(matched) >= 2 {
 		keyVal := os.Getenv(matched[1] + "_key")

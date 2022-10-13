@@ -49,7 +49,6 @@ func ParseJSON(bytes []byte, path string, rp RandomProvider) string {
 				stuff = t[converted]
 			default:
 				stuff = ""
-				break
 			}
 
 		}

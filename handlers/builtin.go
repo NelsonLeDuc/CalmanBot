@@ -57,19 +57,19 @@ var descriptions = []builtinDescription{
 	versionDescription,
 }
 var builtins = []builtin{
-	builtin{
+	{
 		helpDescription,
 		responseForHelp,
 	},
-	builtin{
+	{
 		topDescription,
 		responseForLeaderboard,
 	},
-	builtin{
+	{
 		showDescription,
 		responseForShow,
 	},
-	builtin{
+	{
 		versionDescription,
 		responseForVersion,
 	},
@@ -132,7 +132,7 @@ func responseForHelp(matched []string, params builtInParams) string {
 		}
 		printablePattern := *a.Pattern
 		printablePattern = strings.Replace(printablePattern, "{_botname_}", botName, -1)
-		re := regexp.MustCompile("^\\[(.)\\]")
+		re := regexp.MustCompile(`^\[(.)\]`)
 		matched := re.FindStringSubmatch(printablePattern)
 		thing := ""
 		if len(matched) > 1 && matched[1] != "" {
