@@ -16,6 +16,7 @@ type ProcessConfig interface {
 	LocalSpotifyAuth() bool
 	Port() string
 	MonitorIntervalSeconds() int
+	OverrideBotName() string
 }
 
 type configHolder struct {
@@ -27,6 +28,7 @@ type configHolder struct {
 	localSpotify           bool
 	port                   string
 	monitorIntervalSeconds int
+	overrideBotName        string
 }
 
 func (c configHolder) VerboseMode() bool {
@@ -61,6 +63,10 @@ func (c configHolder) MonitorIntervalSeconds() int {
 	return c.monitorIntervalSeconds
 }
 
+func (c configHolder) OverrideBotName() string {
+	return c.overrideBotName
+}
+
 var config *configHolder
 
 func Configuration() ProcessConfig {
@@ -90,7 +96,19 @@ func Configuration() ProcessConfig {
 			}
 		}
 
-		config = &configHolder{verboseMode, superVerboseMode, discord, enableMinecraft, spotify, *localSpotifyMode, port, monitorInterval}
+		overrideBotName := os.Getenv("bot_name")
+
+		config = &configHolder{
+			verbose:                verboseMode,
+			superVerbose:           superVerboseMode,
+			discord:                discord,
+			minecraft:              enableMinecraft,
+			spotify:                spotify,
+			localSpotify:           *localSpotifyMode,
+			port:                   port,
+			monitorIntervalSeconds: monitorInterval,
+			overrideBotName:        overrideBotName,
+		}
 
 		if superVerboseMode {
 			fmt.Print("!!!! SUPER Verbose Logging enabled !!!!\n\n")
