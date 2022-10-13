@@ -28,7 +28,8 @@ type builtInParams struct {
 
 type builtin struct {
 	builtinDescription
-	handler func([]string, builtInParams) string
+	featureChecker func(service.Service) bool
+	handler        func([]string, builtInParams) string
 }
 
 // Descriptions
@@ -50,29 +51,31 @@ var versionDescription = builtinDescription{
 	"Display current version",
 }
 
-var descriptions = []builtinDescription{
-	helpDescription,
-	topDescription,
-	showDescription,
-	versionDescription,
-}
-var builtins = []builtin{
-	{
-		helpDescription,
-		responseForHelp,
-	},
-	{
-		topDescription,
-		responseForLeaderboard,
-	},
-	{
-		showDescription,
-		responseForShow,
-	},
-	{
-		versionDescription,
-		responseForVersion,
-	},
+var builtins []builtin
+
+func init() {
+	builtins = []builtin{
+		{
+			helpDescription,
+			noFeatureCheck,
+			responseForHelp,
+		},
+		{
+			topDescription,
+			leaderBoardFeatureCheck,
+			responseForLeaderboard,
+		},
+		{
+			showDescription,
+			leaderBoardFeatureCheck,
+			responseForShow,
+		},
+		{
+			versionDescription,
+			noFeatureCheck,
+			responseForVersion,
+		},
+	}
 }
 
 // Handlers
@@ -118,7 +121,10 @@ func responseForHelp(matched []string, params builtInParams) string {
 			longest = len(*a.Pattern)
 		}
 	}
-	for _, b := range descriptions {
+	for _, b := range builtins {
+		if !b.featureChecker(params.service) {
+			continue
+		}
 		length := len("@" + botName + " !" + b.trigger)
 		if length > longest {
 			longest = length
@@ -142,10 +148,22 @@ func responseForHelp(matched []string, params builtInParams) string {
 
 		helpAccumulator += "\n" + fmt.Sprintf(paddingFmt, printablePattern) + "\n\t" + *a.Description
 	}
-	for _, b := range descriptions {
+	for _, b := range builtins {
+		if !b.featureChecker(params.service) {
+			continue
+		}
 		printablePattern := "@" + botName + " !" + b.trigger
 		helpAccumulator += "\n" + fmt.Sprintf(paddingFmt, printablePattern) + "\n\t" + b.description
 	}
 
 	return helpAccumulator + "```"
+}
+
+// Feature checker
+func noFeatureCheck(s service.Service) bool {
+	return true
+}
+
+func leaderBoardFeatureCheck(s service.Service) bool {
+	return s.SupportsBuiltInFeature(service.BuiltInFeatureLeaderboard)
 }

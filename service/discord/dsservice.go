@@ -88,6 +88,14 @@ func (d dsService) MessageFromSessionAndMessage(session *discordgo.Session, mess
 	return dsMessage{message, session, processed}
 }
 
+func (d dsService) SupportsBuiltInFeature(feature service.BuiltInFeature) bool {
+	switch feature {
+	case service.BuiltInFeatureLeaderboard:
+		return false
+	}
+	return false
+}
+
 func processText(session *discordgo.Session, message *discordgo.Message, isDirect bool) string {
 	verboseLog := config.Configuration().VerboseMode()
 	modifiedText := message.Content

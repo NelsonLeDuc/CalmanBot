@@ -3,7 +3,7 @@ package groupme
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"os"
 
@@ -51,7 +51,7 @@ func updateLikes() {
 	for key, group := range groupedPosts {
 		getURL := "https://api.groupme.com/v3/groups/" + key + "/likes?period=day&token=" + token
 		resp, _ := http.Get(getURL)
-		body, _ := ioutil.ReadAll(resp.Body)
+		body, _ := io.ReadAll(resp.Body)
 
 		var wrapper gmMessageWrapper
 		json.Unmarshal(body, &wrapper)

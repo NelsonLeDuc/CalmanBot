@@ -98,6 +98,12 @@ func processBuiltins(service service.Service, message service.Message, bot model
 		fmt.Println("Running builtins")
 	}
 	for _, b := range builtins {
+		if !b.featureChecker(service) {
+			if verboseMode {
+				fmt.Printf("   Service does not support \"%v\"\n", b.trigger)
+			}
+			continue
+		}
 		if verboseMode {
 			fmt.Printf("   Check \"%v\"\n", b.trigger)
 		}
