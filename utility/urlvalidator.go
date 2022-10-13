@@ -10,9 +10,12 @@ func ValidateURL(u string, isImage bool) bool {
 	if IsValidHTTPURLString(u) {
 
 		resp, err := http.Get(u)
+		if err != nil {
+			return false
+		}
 		defer resp.Body.Close()
 
-		if err == nil && resp.StatusCode >= 200 && resp.StatusCode < 300 {
+		if resp.StatusCode >= 200 && resp.StatusCode < 300 {
 			if isImage {
 				return ValidateImage(resp.Body)
 			}

@@ -8,7 +8,6 @@ import (
 	"github.com/nelsonleduc/calmanbot/cache"
 	"github.com/nelsonleduc/calmanbot/handlers/models"
 	"github.com/nelsonleduc/calmanbot/service"
-	_ "github.com/nelsonleduc/calmanbot/service/groupme"
 )
 
 var groupmeService groupme.GMService

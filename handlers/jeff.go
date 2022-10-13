@@ -1,38 +1,35 @@
 package handlers
 
 import (
-    "errors"
-    "fmt"
-    "golang.org/x/net/html"
+	"encoding/json"
+	"errors"
+	"fmt"
 	"net/http"
 	"net/url"
-	"encoding/json"
+
+	"golang.org/x/net/html"
 )
 
 func getBody(doc *html.Node) (*html.Node, error) {
-    var b *html.Node
-    var f func(*html.Node)
-    f = func(n *html.Node) {
-        if n.Type == html.ElementNode && n.Data == "div" {
+	var b *html.Node
+	var f func(*html.Node)
+	f = func(n *html.Node) {
+		if n.Type == html.ElementNode && n.Data == "div" {
 			for _, a := range n.Attr {
 				if a.Key == "class" && a.Val == "generated-text" {
 					b = n
 				}
 			}
-        }
-        for c := n.FirstChild; c != nil; c = c.NextSibling {
-            f(c)
-        }
-    }
-    f(doc)
-    if b != nil {
-        return b, nil
-    }
-    return nil, errors.New("Missing <generated-text> in the node tree")
-}
-
-func main() {
-
+		}
+		for c := n.FirstChild; c != nil; c = c.NextSibling {
+			f(c)
+		}
+	}
+	f(doc)
+	if b != nil {
+		return b, nil
+	}
+	return nil, errors.New("missing <generated-text> in the node tree")
 }
 
 func HandleJeffFetch(w http.ResponseWriter, r *http.Request) {
@@ -47,14 +44,14 @@ func HandleJeffFetch(w http.ResponseWriter, r *http.Request) {
 	resp, err := http.PostForm("http://jeffsum.com/", data)
 	if err != nil {
 		fmt.Println(err)
-		return 
+		return
 	}
 	defer resp.Body.Close()
 
-    doc, _ := html.Parse(resp.Body)
-    bn, err := getBody(doc)
-    if err != nil {
-        return
+	doc, _ := html.Parse(resp.Body)
+	bn, err := getBody(doc)
+	if err != nil {
+		return
 	}
 
 	output := ""

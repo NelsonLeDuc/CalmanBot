@@ -87,7 +87,8 @@ func MonitorMinecraft() {
 			tickInterval := monitorIntervalSeconds()
 			fmt.Printf("[MC: %v] Monitoring Minecraft server status for %s\n", tickInterval, address)
 			stateStack := NewStateStack(10)
-			for ; true; <-time.Tick(tickInterval) {
+			ticker := time.NewTicker(tickInterval)
+			for ; true; <-ticker.C {
 				status, currentState := minecraftState(address, tickInterval)
 				stateStack.PushState(currentState)
 				if config.Configuration().SuperVerboseMode() {
@@ -104,7 +105,7 @@ func MonitorMinecraft() {
 							statusText = *identifierString + " is now online!"
 						}
 						fmt.Printf("[MC: %v] Changed status for Minecraft server status for %s: %v %v %+v\n", tickInterval, address, status.Version, status.Online, stateStack)
-						post := service.Post{"", statusText, statusText, service.PostTypeText, 0}
+						post := service.Post{Key: "", Text: statusText, RawText: statusText, Type: service.PostTypeText, CacheID: 0}
 						service.FanoutTrigger(address, post)
 					}
 				}
@@ -190,7 +191,7 @@ func (s stateStack) Capacity() int {
 
 func (s stateStack) LastState() (bool, error) {
 	if len(s.history) == 0 {
-		return false, errors.New("Stack is empty")
+		return false, errors.New("stack is empty")
 	}
 	return s.history[len(s.history)-1], nil
 }

@@ -3,7 +3,7 @@ package handlers
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
 	"net/url"
@@ -40,7 +40,7 @@ func playlistForGroup(serverID, groupName string, create bool) *spotifyPlaylist 
 	}
 	var playlist spotifyPlaylist
 	if rows.Next() {
-		err = sqlstruct.Scan(&playlist, rows)
+		_ = sqlstruct.Scan(&playlist, rows)
 	} else if create {
 		user, _ := client.CurrentUser()
 		name := serverID
@@ -163,7 +163,7 @@ func HandleYoutubeLinkt(w http.ResponseWriter, r *http.Request) {
 	}
 	defer resp.Body.Close()
 
-	content, _ := ioutil.ReadAll(resp.Body)
+	content, _ := io.ReadAll(resp.Body)
 
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		log.Printf("Bad Response: %d length: %d", resp.StatusCode, len(content))
