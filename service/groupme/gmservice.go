@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"net/url"
@@ -86,6 +85,14 @@ func (g GMService) ServiceTriggerWrangler() (service.TriggerWrangler, error) {
 	return nil, errors.New("Unsupported")
 }
 
+func (g GMService) SupportsBuiltInFeature(feature service.BuiltInFeature) bool {
+	switch feature {
+	case service.BuiltInFeatureLeaderboard:
+		return true
+	}
+	return false
+}
+
 func postToPastebin(text string) string {
 	data := url.Values{}
 
@@ -103,7 +110,7 @@ func postToPastebin(text string) string {
 	}
 	defer resp.Body.Close()
 
-	respBody, err := ioutil.ReadAll(resp.Body)
+	respBody, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return ""
 	}
@@ -130,7 +137,7 @@ func messageID(message service.Message) (string, error) {
 	getURL := "https://api.groupme.com/v3/groups/" + message.BotGroupID() + "/messages?token=" + token + "&after_id=" + message.MessageID()
 	resp, _ := http.Get(getURL)
 
-	body, _ := ioutil.ReadAll(resp.Body)
+	body, _ := io.ReadAll(resp.Body)
 
 	var wrapper gmMessageWrapper
 	json.Unmarshal(body, &wrapper)
@@ -141,5 +148,5 @@ func messageID(message service.Message) (string, error) {
 		}
 	}
 
-	return "", errors.New("No messages found")
+	return "", errors.New("no messages found")
 }

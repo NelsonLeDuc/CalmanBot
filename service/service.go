@@ -8,6 +8,12 @@ const (
 	PostTypeURL
 )
 
+type BuiltInFeature int
+
+const (
+	BuiltInFeatureLeaderboard BuiltInFeature = iota
+)
+
 type Post struct {
 	Key     string
 	Text    string
@@ -23,6 +29,9 @@ type Service interface {
 
 	// Triggers
 	ServiceTriggerWrangler() (TriggerWrangler, error)
+
+	// Capabilities
+	SupportsBuiltInFeature(BuiltInFeature) bool
 }
 
 type Message interface {
