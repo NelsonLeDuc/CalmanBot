@@ -35,6 +35,14 @@ func HandleCalman(message service.Message, providedService service.Service, cach
 	}
 
 	bot, _ := repo.FetchBot(message.BotGroupID())
+	if overrideBotName := config.Configuration().OverrideBotName(); len(overrideBotName) > 0 {
+		bot = models.Bot{
+			GroupName:     "DEBUG_OVERRIDE",
+			GroupID:       "DEBUG_OVERRIDE",
+			BotNameString: overrideBotName,
+			Key:           "DEBUG_OVERRIDE",
+		}
+	}
 
 	if verboseLog {
 		fmt.Printf("Fetched bot %#v\n", bot)
