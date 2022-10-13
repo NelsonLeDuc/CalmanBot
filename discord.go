@@ -24,7 +24,7 @@ var (
 )
 
 type statusTuple struct {
-	gameType discordgo.GameType
+	gameType discordgo.ActivityType
 	status   string
 }
 
@@ -49,14 +49,14 @@ func queryDBStatus() []statusTuple {
 		var status dbStatus
 		err := sqlstruct.Scan(&status, rows)
 		if err == nil {
-			var statusType discordgo.GameType
+			var statusType discordgo.ActivityType
 			switch status.Type {
 			case 0:
-				statusType = discordgo.GameTypeGame
+				statusType = discordgo.ActivityTypeGame
 			case 1:
-				statusType = discordgo.GameTypeListening
+				statusType = discordgo.ActivityTypeListening
 			case 2:
-				statusType = discordgo.GameTypeWatching
+				statusType = discordgo.ActivityTypeWatching
 			default:
 				continue
 			}
@@ -79,7 +79,7 @@ func randomStatus(excluding statusTuple) statusTuple {
 	choice := excluding
 	statusOptions := queryDBStatus()
 	if len(statusOptions) == 0 {
-		return statusTuple{discordgo.GameTypeWatching, "for questions"}
+		return statusTuple{discordgo.ActivityTypeWatching, "for questions"}
 	}
 	for choice == excluding {
 		idx := rand.Intn(len(statusOptions))
@@ -90,15 +90,32 @@ func randomStatus(excluding statusTuple) statusTuple {
 
 func postStatus(s *discordgo.Session, statusTuple statusTuple) {
 	log.Printf("[Tick] Setting status \"%+v\"\n", statusTuple)
-	s.UpdateStatusComplex(discordgo.UpdateStatusData{
+	err := s.UpdateStatusComplex(discordgo.UpdateStatusData{
 		IdleSince: nil,
-		Game: &discordgo.Game{
-			Name: statusTuple.status,
-			Type: statusTuple.gameType,
-			URL:  "",
+		Activities: []*discordgo.Activity{
+			{
+				Name:          statusTuple.status,
+				Type:          statusTuple.gameType,
+				URL:           "",
+				CreatedAt:     time.Now(),
+				ApplicationID: "",
+				State:         "",
+				Details:       "",
+				Timestamps:    discordgo.TimeStamps{},
+				Emoji:         discordgo.Emoji{},
+				Party:         discordgo.Party{},
+				Assets:        discordgo.Assets{},
+				Secrets:       discordgo.Secrets{},
+				Instance:      false,
+				Flags:         0,
+			},
 		},
 		AFK:    false,
-		Status: "online"})
+		Status: "online",
+	})
+	if config.Configuration().VerboseMode() && err != nil {
+		log.Fatalln("failed to update status: ", err)
+	}
 }
 
 func CreateWebhook() {
