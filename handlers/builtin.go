@@ -12,7 +12,7 @@ import (
 	"github.com/nelsonleduc/calmanbot/service"
 )
 
-const currentCalmanBotVersion string = "v2.16.0"
+const currentCalmanBotVersion string = "v2.16.1"
 
 type builtinDescription struct {
 	trigger     string
