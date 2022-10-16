@@ -62,7 +62,7 @@ func (d dsService) postToChannel(post service.Post, channelID string) {
 func (d dsService) NoteProcessing(groupMessage service.Message) {
 	discordMessage := groupMessage.(dsMessage)
 
-	emojis := []string{"🍉", "🤓", "🦥", "🍁", "🌝", "🐈", "🦞", "👒"}
+	emojis := []string{"🍉", "🤓", "🦥", "🍁", "🌝", "🐈", "🦞", "👒", "💸", "👁️", "❤️‍🔥", "👻", "👐", "🤜", "🦑", "🌚", "💸"}
 	chosen := emojis[rand.Intn(len(emojis))]
 	err := discordMessage.session.MessageReactionAdd(discordMessage.ChannelID, discordMessage.ID, chosen)
 	if err != nil && config.Configuration().VerboseMode() {

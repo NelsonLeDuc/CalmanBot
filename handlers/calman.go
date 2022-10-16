@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"crypto/tls"
 	"errors"
 	"fmt"
 	"io"
@@ -259,7 +260,12 @@ func handleURLAction(a models.Action, triggerHandler service.TriggerWrangler, b 
 		url = matched[1]
 	}
 
-	client := &http.Client{}
+	// Workaround TLS incompatibility with latest go and reddit
+	client := &http.Client{
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{},
+		},
+	}
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return "", err
