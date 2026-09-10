@@ -147,18 +147,20 @@ func HandleYoutubeLinkt(w http.ResponseWriter, r *http.Request) {
 	serverID := r.URL.Query().Get("serverid")
 	groupName := r.URL.Query().Get("groupName")
 
-	url := "https://api.song.link/v1-alpha.1/links?url=" + url.QueryEscape(query)
+	url := "https://api.ml.jadquir.com/v1/lookup?q=" + url.QueryEscape(query)
 	client := &http.Client{}
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
-		fmt.Printf("songlink request error: %v\n", err)
+		fmt.Printf("musiclink request error: %v\n", err)
 		return
 	}
 
+	req.Header.Set("Authorization", "Bearer "+os.Getenv("musiclink_api_key"))
 	req.Header.Set("User-Agent", "CalmanBot/2.5.3")
+
 	resp, err := client.Do(req)
 	if err != nil {
-		fmt.Printf("songlink error: %v\n", err)
+		fmt.Printf("musiclink error: %v\n", err)
 		return
 	}
 	defer resp.Body.Close()
@@ -174,29 +176,35 @@ func HandleYoutubeLinkt(w http.ResponseWriter, r *http.Request) {
 
 	err = json.Unmarshal(content, &stuff)
 	if err != nil {
-		fmt.Printf("songlink json error: %v\n", err)
+		fmt.Printf("musiclink json error: %v\n", err)
 		return
 	}
 
-	pageURL := stuff["pageUrl"].(string)
-	links := stuff["linksByPlatform"].(map[string]interface{})
-	if len(links) <= 2 {
-		fmt.Printf("songlink sub 2 platforms error: %v\n", err)
+	data := stuff["data"].([]interface{})
+	if len(data) == 0 {
+		fmt.Printf("musiclink no results\n")
 		return
 	}
 
-	spotifyLinkPayload := links["spotify"].(map[string]interface{})
-	hasSpotify := spotifyLinkPayload != nil
-	hasAppleMusic := links["appleMusic"] != nil
+	track := data[0].(map[string]interface{})
+	pageURL := track["url"].(string)
+	links := track["links"].(map[string]interface{})
 
-	spotifyEntityID := (spotifyLinkPayload["entityUniqueId"].(string))[14:]
-	if len(groupID) > 0 && hasSpotify {
-		go processSpotify(groupID, serverID, spotifyEntityID, groupName)
-	}
+	spotifyLink, hasSpotify := links["spotify"].(string)
+	_, hasAppleMusic := links["apple_music"].(string)
 
 	if !hasAppleMusic || !hasSpotify {
-		fmt.Printf("songlink missing playform apple: %v spotify: %v\n", hasAppleMusic, hasSpotify)
+		fmt.Printf("musiclink missing platform apple: %v spotify: %v\n", hasAppleMusic, hasSpotify)
 		return
+	}
+
+	spotifyEntityID := strings.TrimPrefix(spotifyLink, "https://open.spotify.com/track/")
+	if index := strings.Index(spotifyEntityID, "?"); index >= 0 {
+		spotifyEntityID = spotifyEntityID[:index]
+	}
+
+	if len(groupID) > 0 && hasSpotify {
+		go processSpotify(groupID, serverID, spotifyEntityID, groupName)
 	}
 
 	outputData := map[string]string{
