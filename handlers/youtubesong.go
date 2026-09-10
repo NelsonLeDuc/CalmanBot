@@ -28,29 +28,152 @@ type spotifyPlaylist struct {
 }
 
 func playlistForGroup(serverID, groupName string, create bool) *spotifyPlaylist {
-	queryStr := fmt.Sprintf("SELECT %s FROM spotify_playlists WHERE group_id = $1 LIMIT 1", sqlstruct.Columns(spotifyPlaylist{}))
+	log.Printf(
+		"[spotify] playlistForGroup: serverID=%q groupName=%q create=%v",
+		serverID,
+		groupName,
+		create,
+	)
+
+	queryStr := fmt.Sprintf(
+		"SELECT %s FROM spotify_playlists WHERE group_id = $1 LIMIT 1",
+		sqlstruct.Columns(spotifyPlaylist{}),
+	)
+
 	rows, err := config.DB().Query(queryStr, serverID)
 	if err != nil {
+		log.Printf(
+			"[spotify] playlistForGroup: database query failed serverID=%q: %v",
+			serverID,
+			err,
+		)
 		return nil
 	}
 	defer rows.Close()
 
-	if config.Configuration().SuperVerboseMode() {
-		fmt.Println("Loaded server list:")
-	}
 	var playlist spotifyPlaylist
+
 	if rows.Next() {
-		_ = sqlstruct.Scan(&playlist, rows)
-	} else if create {
-		user, _ := client.CurrentUser()
-		name := serverID
-		if len(groupName) > 0 {
-			name = groupName
+		if err := sqlstruct.Scan(&playlist, rows); err != nil {
+			log.Printf(
+				"[spotify] playlistForGroup: failed to scan playlist serverID=%q: %v",
+				serverID,
+				err,
+			)
+			return nil
 		}
-		spotifyPlaylistCreated, _ := client.CreatePlaylistForUser(user.ID, name+" (CalmanBot)", "", false)
-		queryStr := "INSERT INTO spotify_playlists(group_id, playlist_id) VALUES($1, $2) ON CONFLICT DO NOTHING"
-		config.DB().Exec(queryStr, serverID, spotifyPlaylistCreated.ID.String())
-		playlist = spotifyPlaylist{serverID, spotifyPlaylistCreated.ID.String()}
+
+		log.Printf(
+			"[spotify] playlistForGroup: existing playlist found serverID=%q playlistID=%q",
+			serverID,
+			playlist.PlaylistID,
+		)
+
+		return &playlist
+	}
+
+	if err := rows.Err(); err != nil {
+		log.Printf(
+			"[spotify] playlistForGroup: row iteration error serverID=%q: %v",
+			serverID,
+			err,
+		)
+		return nil
+	}
+
+	if !create {
+		log.Printf(
+			"[spotify] playlistForGroup: no playlist found and create=false serverID=%q",
+			serverID,
+		)
+		return &playlist
+	}
+
+	log.Printf(
+		"[spotify] playlistForGroup: no playlist found; attempting to create one serverID=%q",
+		serverID,
+	)
+
+	user, err := client.CurrentUser()
+	if err != nil {
+		log.Printf(
+			"[spotify] playlistForGroup: CurrentUser failed serverID=%q: %v",
+			serverID,
+			err,
+		)
+		return nil
+	}
+
+	name := serverID
+	if len(groupName) > 0 {
+		name = groupName
+	}
+
+	playlistName := name + " (CalmanBot)"
+
+	log.Printf(
+		"[spotify] playlistForGroup: creating Spotify playlist name=%q userID=%q",
+		playlistName,
+		user.ID,
+	)
+
+	spotifyPlaylistCreated, err := client.CreatePlaylistForUser(
+		user.ID,
+		playlistName,
+		"",
+		false,
+	)
+	if err != nil {
+		log.Printf(
+			"[spotify] playlistForGroup: CreatePlaylistForUser failed serverID=%q name=%q: %v",
+			serverID,
+			playlistName,
+			err,
+		)
+		return nil
+	}
+
+	if spotifyPlaylistCreated == nil {
+		log.Printf(
+			"[spotify] playlistForGroup: CreatePlaylistForUser returned nil playlist serverID=%q",
+			serverID,
+		)
+		return nil
+	}
+
+	playlistID := spotifyPlaylistCreated.ID.String()
+
+	log.Printf(
+		"[spotify] playlistForGroup: Spotify playlist created serverID=%q playlistID=%q",
+		serverID,
+		playlistID,
+	)
+
+	queryStr = `
+		INSERT INTO spotify_playlists(group_id, playlist_id)
+		VALUES($1, $2)
+		ON CONFLICT DO NOTHING
+	`
+
+	if _, err := config.DB().Exec(queryStr, serverID, playlistID); err != nil {
+		log.Printf(
+			"[spotify] playlistForGroup: failed to save playlist to database serverID=%q playlistID=%q: %v",
+			serverID,
+			playlistID,
+			err,
+		)
+		return nil
+	}
+
+	log.Printf(
+		"[spotify] playlistForGroup: playlist saved to database serverID=%q playlistID=%q",
+		serverID,
+		playlistID,
+	)
+
+	playlist = spotifyPlaylist{
+		GroupID:    serverID,
+		PlaylistID: playlistID,
 	}
 
 	return &playlist
@@ -65,41 +188,166 @@ func SetupSpotify() {
 	}
 
 	oauthToken := os.Getenv("spotify_oauth")
-	auth = spotify.NewAuthenticator(redirectURL, spotify.ScopeUserReadPrivate, spotify.ScopePlaylistModifyPrivate)
 
-	url := auth.AuthURL(state)
-	fmt.Printf("spotify auth url: %+v\n", url)
+	log.Printf(
+		"[spotify] SetupSpotify: starting redirectURL=%q oauthTokenPresent=%v",
+		redirectURL,
+		oauthToken != "",
+	)
+
+	auth = spotify.NewAuthenticator(
+		redirectURL,
+		spotify.ScopeUserReadPrivate,
+		spotify.ScopePlaylistModifyPrivate,
+	)
+
+	authURL := auth.AuthURL(state)
+	fmt.Printf("spotify auth url: %+v\n", authURL)
 
 	var token oauth2.Token
 	b := []byte(oauthToken)
-	json.Unmarshal(b, &token)
+
+	if err := json.Unmarshal(b, &token); err != nil {
+		log.Printf("[spotify] SetupSpotify: failed to decode spotify_oauth: %v", err)
+	}
+
 	client = auth.NewClient(&token)
-	fmt.Printf("oauth spotify client: %+v\n", client)
+
+	log.Printf(
+		"[spotify] SetupSpotify: Spotify client initialized tokenExpiry=%v",
+		token.Expiry,
+	)
 }
 
 func HandleSpotifyRedirect(w http.ResponseWriter, r *http.Request) {
-	token, _ := auth.Token(state, r)
+	token, err := auth.Token(state, r)
+	if err != nil {
+		log.Printf("[spotify] HandleSpotifyRedirect: failed to get token: %v", err)
+		http.Error(w, "Spotify authorization failed", http.StatusInternalServerError)
+		return
+	}
+
 	client := auth.NewClient(token)
 
-	tokenOutput, _ := client.Token()
-	jsonVersion, _ := json.Marshal(tokenOutput)
+	tokenOutput, err := client.Token()
+	if err != nil {
+		log.Printf("[spotify] HandleSpotifyRedirect: failed to get client token: %v", err)
+		return
+	}
+
+	jsonVersion, err := json.Marshal(tokenOutput)
+	if err != nil {
+		log.Printf("[spotify] HandleSpotifyRedirect: failed to marshal token: %v", err)
+		return
+	}
+
 	output := string(jsonVersion)
 	output = strings.Replace(output, "\"", "\\\"", -1)
+
 	fmt.Printf("oauth token: \"%+v\"\n", output)
 }
 
 func processSpotify(groupID, serverID, spotifyID string, groupName string) {
+	log.Printf(
+		"[spotify] processSpotify: START groupID=%q serverID=%q spotifyID=%q groupName=%q",
+		groupID,
+		serverID,
+		spotifyID,
+		groupName,
+	)
+
 	if !config.Configuration().EnableSpotify() {
+		log.Printf(
+			"[spotify] processSpotify: SKIP Spotify disabled groupID=%q serverID=%q",
+			groupID,
+			serverID,
+		)
 		return
 	}
 
-	hasTrigger := service.TriggerExists("spotifyPlaylist", serverID, groupID)
+	log.Printf(
+		"[spotify] processSpotify: checking trigger groupID=%q serverID=%q",
+		groupID,
+		serverID,
+	)
+
+	hasTrigger := service.TriggerExists(
+		"spotifyPlaylist",
+		serverID,
+		groupID,
+	)
+
 	if !hasTrigger {
+		log.Printf(
+			"[spotify] processSpotify: SKIP no spotifyPlaylist trigger groupID=%q serverID=%q",
+			groupID,
+			serverID,
+		)
 		return
 	}
+
+	log.Printf(
+		"[spotify] processSpotify: trigger found groupID=%q serverID=%q",
+		groupID,
+		serverID,
+	)
 
 	playlist := playlistForGroup(serverID, groupName, true)
-	client.AddTracksToPlaylist(spotify.ID(playlist.PlaylistID), spotify.ID(spotifyID))
+
+	if playlist == nil {
+		log.Printf(
+			"[spotify] processSpotify: ERROR playlistForGroup returned nil groupID=%q serverID=%q",
+			groupID,
+			serverID,
+		)
+		return
+	}
+
+	if playlist.PlaylistID == "" {
+		log.Printf(
+			"[spotify] processSpotify: ERROR playlist has empty PlaylistID groupID=%q serverID=%q",
+			groupID,
+			serverID,
+		)
+		return
+	}
+
+	if spotifyID == "" {
+		log.Printf(
+			"[spotify] processSpotify: ERROR Spotify track ID is empty groupID=%q serverID=%q playlistID=%q",
+			groupID,
+			serverID,
+			playlist.PlaylistID,
+		)
+		return
+	}
+
+	log.Printf(
+		"[spotify] processSpotify: adding track spotifyID=%q playlistID=%q",
+		spotifyID,
+		playlist.PlaylistID,
+	)
+
+	snapshotID, err := client.AddTracksToPlaylist(
+		spotify.ID(playlist.PlaylistID),
+		spotify.ID(spotifyID),
+	)
+	if err != nil {
+		log.Printf(
+			"[spotify] processSpotify: ERROR AddTracksToPlaylist failed spotifyID=%q playlistID=%q: %v",
+			spotifyID,
+			playlist.PlaylistID,
+			err,
+		)
+		return
+	}
+
+	log.Printf(
+		"[spotify] processSpotify: SUCCESS added spotifyID=%q playlistID=%q snapshotID=%q",
+		spotifyID,
+		playlist.PlaylistID,
+		snapshotID,
+	)
 }
 
 func HandlePlaylistRequest(w http.ResponseWriter, r *http.Request) {
@@ -109,6 +357,7 @@ func HandlePlaylistRequest(w http.ResponseWriter, r *http.Request) {
 		}
 		json, _ := json.Marshal(outputData)
 		w.Write(json)
+		return
 	}
 
 	serverID := r.URL.Query().Get("serverid")
@@ -122,7 +371,8 @@ func HandlePlaylistRequest(w http.ResponseWriter, r *http.Request) {
 	playlist := playlistForGroup(serverID, groupName, hasTrigger)
 
 	var outputData map[string]string
-	if len(playlist.PlaylistID) > 0 {
+
+	if playlist != nil && len(playlist.PlaylistID) > 0 {
 		spotifyLink := "https://open.spotify.com/playlist/" + playlist.PlaylistID
 
 		outputData = map[string]string{
@@ -133,6 +383,7 @@ func HandlePlaylistRequest(w http.ResponseWriter, r *http.Request) {
 			"output": "There is no playlist for this server",
 		}
 	}
+
 	json, _ := json.Marshal(outputData)
 	w.Write(json)
 }
@@ -149,6 +400,7 @@ func HandleYoutubeLinkt(w http.ResponseWriter, r *http.Request) {
 
 	url := "https://api.ml.jadquir.com/v1/lookup?q=" + url.QueryEscape(query)
 	client := &http.Client{}
+
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		fmt.Printf("musiclink request error: %v\n", err)
@@ -194,17 +446,46 @@ func HandleYoutubeLinkt(w http.ResponseWriter, r *http.Request) {
 	_, hasAppleMusic := links["apple_music"].(string)
 
 	if !hasAppleMusic || !hasSpotify {
-		fmt.Printf("musiclink missing platform apple: %v spotify: %v\n", hasAppleMusic, hasSpotify)
+		fmt.Printf(
+			"musiclink missing platform apple: %v spotify: %v\n",
+			hasAppleMusic,
+			hasSpotify,
+		)
 		return
 	}
 
-	spotifyEntityID := strings.TrimPrefix(spotifyLink, "https://open.spotify.com/track/")
+	spotifyEntityID := strings.TrimPrefix(
+		spotifyLink,
+		"https://open.spotify.com/track/",
+	)
+
 	if index := strings.Index(spotifyEntityID, "?"); index >= 0 {
 		spotifyEntityID = spotifyEntityID[:index]
 	}
 
+	log.Printf(
+		"[spotify] HandleYoutubeLinkt: resolved track groupID=%q serverID=%q spotifyLink=%q spotifyID=%q",
+		groupID,
+		serverID,
+		spotifyLink,
+		spotifyEntityID,
+	)
+
 	if len(groupID) > 0 && hasSpotify {
+		log.Printf(
+			"[spotify] HandleYoutubeLinkt: launching processSpotify groupID=%q serverID=%q spotifyID=%q",
+			groupID,
+			serverID,
+			spotifyEntityID,
+		)
+
 		go processSpotify(groupID, serverID, spotifyEntityID, groupName)
+	} else {
+		log.Printf(
+			"[spotify] HandleYoutubeLinkt: NOT launching processSpotify groupID=%q hasSpotify=%v",
+			groupID,
+			hasSpotify,
+		)
 	}
 
 	outputData := map[string]string{
